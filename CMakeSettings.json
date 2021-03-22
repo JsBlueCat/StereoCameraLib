@@ -9,7 +9,7 @@
       ],
       "buildRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\build\\${name}",
       "installRoot": "${env.USERPROFILE}\\CMakeBuilds\\${workspaceHash}\\install\\${name}",
-      "cmakeCommandArgs": "-D OpenCV_DIR=\"D:\\opencv-3.4.7\\build\" -D CMAKE_GENERATOR_PLATFORM=x64",
+      "cmakeCommandArgs": "-D OpenCV_DIR=\"D:\\opencv-3.4.7\\build\" -D CMAKE_GENERATOR_PLATFORM=x64 -DCMAKE_CXX_FLAGS=/D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING",
       "buildCommandArgs": "-v",
       "ctestCommandArgs": ""
     }
