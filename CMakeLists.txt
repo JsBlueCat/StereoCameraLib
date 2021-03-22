@@ -19,8 +19,22 @@ message(STATUS "    version: ${OpenCV_VERSION}")
 message(STATUS "    libraries: ${OpenCV_LIBS}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
+#############################################
+# Unit tests
+add_subdirectory(3rd_party/google-test)
+
+# enable CTest testing
+enable_testing()
+
 # Declare the executable target built from your sources
-add_executable(test example.cpp)
+add_executable(example example.cpp)
+add_executable(unit_test unit_tests.cpp)
 
 # Link your application with OpenCV libraries
-target_link_libraries(test  PRIVATE ${OpenCV_LIBS})
+target_link_libraries(example  PRIVATE ${OpenCV_LIBS})
+target_link_libraries(unit_test 
+GTest::GTest 
+GTest::Main
+)
+
+add_test(test_all unit_test)
