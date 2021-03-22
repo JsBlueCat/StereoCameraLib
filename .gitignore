@@ -63,3 +63,5 @@ install_manifest.txt
 .tags
 .vscode
 .vs
+
+/dist
