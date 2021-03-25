@@ -1,5 +1,6 @@
 #include "MyCamera.h"
 #include <string.h>
+#include <stdlib.h>
 
 CMyCamera::CMyCamera()
 {
@@ -12,6 +13,9 @@ CMyCamera::~CMyCamera()
     {
         MV_CC_DestroyHandle(m_hDevHandle);
         m_hDevHandle    = NULL;
+    }
+    if (m_pBufForDriver){
+        free(m_pBufForDriver);
     }
 }
 
@@ -26,7 +30,7 @@ int CMyCamera::EnumDevices(MV_CC_DEVICE_INFO_LIST* pstDevList)
     return MV_OK;
 }
 
-// ch:´ò¿ªÉè±¸ | en:Open Device
+// ch:æ‰“å¼€è®¾å¤‡ | en:Open Device
 int     CMyCamera::Open(MV_CC_DEVICE_INFO* pstDeviceInfo)
 {
     if (NULL == pstDeviceInfo)
@@ -57,7 +61,7 @@ int     CMyCamera::Open(MV_CC_DEVICE_INFO* pstDeviceInfo)
 }
 
 
-// ch:¹Ø±ÕÉè±¸ | en:Close Device
+// ch:å…³é—­è®¾å¤‡ | en:Close Device
 int     CMyCamera::Close()
 {
     int nRet = MV_OK;
@@ -75,14 +79,14 @@ int     CMyCamera::Close()
 }
 
 
-// ch:¿ªÆô×¥Í¼ | en:Start Grabbing
+// ch:å¼€å¯æŠ“å›¾ | en:Start Grabbing
 int     CMyCamera::StartGrabbing()
 {
     return MV_CC_StartGrabbing(m_hDevHandle);
 }
 
 
-// ch:Í£Ö¹×¥Í¼ | en:Stop Grabbing
+// ch:åœæ­¢æŠ“å›¾ | en:Stop Grabbing
 int     CMyCamera::StopGrabbing()
 {
     return MV_CC_StopGrabbing(m_hDevHandle);
@@ -111,7 +115,7 @@ int     CMyCamera::GetOneFrameTimeout(unsigned char* pData, unsigned int* pnData
 }
 
 
-// ch:ÉèÖÃÏÔÊ¾´°¿Ú¾ä±ú | en:Set Display Window Handle
+// ch:è®¾ç½®æ˜¾ç¤ºçª—å£å¥æŸ„ | en:Set Display Window Handle
 int     CMyCamera::Display(void* hWnd)
 {
     return MV_CC_Display(m_hDevHandle, hWnd);
@@ -128,7 +132,7 @@ int CMyCamera::SaveImage(MV_SAVE_IMAGE_PARAM_EX* pstParam)
     return MV_CC_SaveImageEx2(m_hDevHandle, pstParam);
 }
 
-// ch:×¢²áÍ¼ÏñÊı¾İ»Øµ÷ | en:Register Image Data CallBack
+// ch:æ³¨å†Œå›¾åƒæ•°æ®å›è°ƒ | en:Register Image Data CallBack
 int CMyCamera::RegisterImageCallBack(void(__stdcall* cbOutput)(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, 
                                                                 void* pUser),void* pUser)
 {
@@ -136,14 +140,14 @@ int CMyCamera::RegisterImageCallBack(void(__stdcall* cbOutput)(unsigned char * p
 }
 
 
-// ch:×¢²áÏûÏ¢Òì³£»Øµ÷ | en:Register Message Exception CallBack
+// ch:æ³¨å†Œæ¶ˆæ¯å¼‚å¸¸å›è°ƒ | en:Register Message Exception CallBack
 int     CMyCamera::RegisterExceptionCallBack(void(__stdcall* cbException)(unsigned int nMsgType, void* pUser),void* pUser)
 {
     return MV_CC_RegisterExceptionCallBack(m_hDevHandle, cbException, pUser);
 }
 
 
-// ch:»ñÈ¡IntĞÍ²ÎÊı£¬Èç WidthºÍHeight£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è·å–Intå‹å‚æ•°ï¼Œå¦‚ Widthå’ŒHeightï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Get Int type parameters, such as Width and Height, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::GetIntValue(IN const char* strKey, OUT unsigned int *pnValue)
 {
@@ -166,7 +170,7 @@ int     CMyCamera::GetIntValue(IN const char* strKey, OUT unsigned int *pnValue)
 }
 
 
-// ch:ÉèÖÃIntĞÍ²ÎÊı£¬Èç WidthºÍHeight£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è®¾ç½®Intå‹å‚æ•°ï¼Œå¦‚ Widthå’ŒHeightï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Set Int type parameters, such as Width and Height, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::SetIntValue(IN const char* strKey, IN unsigned int nValue)
 {
@@ -179,7 +183,7 @@ int     CMyCamera::SetIntValue(IN const char* strKey, IN unsigned int nValue)
 }
 
 
-// ch:»ñÈ¡FloatĞÍ²ÎÊı£¬Èç ExposureTimeºÍGain£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è·å–Floatå‹å‚æ•°ï¼Œå¦‚ ExposureTimeå’ŒGainï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Get Float type parameters, such as ExposureTime and Gain, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::GetFloatValue(IN const char* strKey, OUT float *pfValue)
 {
@@ -202,7 +206,7 @@ int     CMyCamera::GetFloatValue(IN const char* strKey, OUT float *pfValue)
 }
 
 
-// ch:ÉèÖÃFloatĞÍ²ÎÊı£¬Èç ExposureTimeºÍGain£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è®¾ç½®Floatå‹å‚æ•°ï¼Œå¦‚ ExposureTimeå’ŒGainï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Set Float type parameters, such as ExposureTime and Gain, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::SetFloatValue(IN const char* strKey, IN float fValue)
 {
@@ -215,7 +219,7 @@ int     CMyCamera::SetFloatValue(IN const char* strKey, IN float fValue)
 }
 
 
-// ch:»ñÈ¡EnumĞÍ²ÎÊı£¬Èç PixelFormat£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è·å–Enumå‹å‚æ•°ï¼Œå¦‚ PixelFormatï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Get Enum type parameters, such as PixelFormat, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::GetEnumValue(IN const char* strKey, OUT unsigned int *pnValue)
 {
@@ -238,7 +242,7 @@ int     CMyCamera::GetEnumValue(IN const char* strKey, OUT unsigned int *pnValue
 }
 
 
-// ch:ÉèÖÃEnumĞÍ²ÎÊı£¬Èç PixelFormat£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è®¾ç½®Enumå‹å‚æ•°ï¼Œå¦‚ PixelFormatï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Set Enum type parameters, such as PixelFormat, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::SetEnumValue(IN const char* strKey, IN unsigned int nValue)
 {
@@ -251,7 +255,7 @@ int     CMyCamera::SetEnumValue(IN const char* strKey, IN unsigned int nValue)
 }
 
 
-// ch:»ñÈ¡BoolĞÍ²ÎÊı£¬Èç ReverseX£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è·å–Boolå‹å‚æ•°ï¼Œå¦‚ ReverseXï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Get Bool type parameters, such as ReverseX, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::GetBoolValue(IN const char* strKey, OUT bool *pbValue)
 {
@@ -264,7 +268,7 @@ int     CMyCamera::GetBoolValue(IN const char* strKey, OUT bool *pbValue)
 }
 
 
-// ch:ÉèÖÃBoolĞÍ²ÎÊı£¬Èç ReverseX£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:è®¾ç½®Boolå‹å‚æ•°ï¼Œå¦‚ ReverseXï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Set Bool type parameters, such as ReverseX, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::SetBoolValue(IN const char* strKey, IN bool bValue)
 {
@@ -277,7 +281,7 @@ int     CMyCamera::SetBoolValue(IN const char* strKey, IN bool bValue)
 }
 
 
-// ch:»ñÈ¡StringĞÍ²ÎÊı£¬Èç DeviceUserID£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼şUserSetSave
+// ch:è·å–Stringå‹å‚æ•°ï¼Œå¦‚ DeviceUserIDï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶UserSetSave
 // en:Get String type parameters, such as DeviceUserID, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::GetStringValue(IN const char* strKey, IN OUT char* strValue, IN unsigned int nSize)
 {
@@ -300,7 +304,7 @@ int     CMyCamera::GetStringValue(IN const char* strKey, IN OUT char* strValue, 
 }
 
 
-// ch:ÉèÖÃStringĞÍ²ÎÊı£¬Èç DeviceUserID£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼şUserSetSave
+// ch:è®¾ç½®Stringå‹å‚æ•°ï¼Œå¦‚ DeviceUserIDï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶UserSetSave
 // en:Set String type parameters, such as DeviceUserID, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::SetStringValue(IN const char* strKey, IN const char* strValue)
 {
@@ -313,7 +317,7 @@ int     CMyCamera::SetStringValue(IN const char* strKey, IN const char* strValue
 }
 
 
-// ch:Ö´ĞĞÒ»´ÎCommandĞÍÃüÁî£¬Èç UserSetSave£¬ÏêÏ¸ÄÚÈİ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼ş
+// ch:æ‰§è¡Œä¸€æ¬¡Commandå‹å‘½ä»¤ï¼Œå¦‚ UserSetSaveï¼Œè¯¦ç»†å†…å®¹å‚è€ƒSDKå®‰è£…ç›®å½•ä¸‹çš„ MvCameraNode.xlsx æ–‡ä»¶
 // en:Execute Command once, such as UserSetSave, for details please refer to MvCameraNode.xlsx file under SDK installation directory
 int     CMyCamera::CommandExecute(IN const char* strKey)
 {
@@ -333,7 +337,7 @@ int CMyCamera::GetOptimalPacketSize()
 int     CMyCamera::GetAllMatchInfo(OUT unsigned int *nLostFrame, OUT unsigned int *nFrameCount)
 {
     MV_CC_DEVICE_INFO stDevInfo = {0};
-    int nRet = MV_CC_GetDeviceInfo(m_hDevHandle, &stDevInfo); //¸Ã½Ó¿Úu3Ôİ²»Ö§³Ö£¬ÓÃ´Ë·½Ê½À´ÅĞ¶Ïu3»¹ÊÇGigE
+    int nRet = MV_CC_GetDeviceInfo(m_hDevHandle, &stDevInfo); //è¯¥æ¥å£u3æš‚ä¸æ”¯æŒï¼Œç”¨æ­¤æ–¹å¼æ¥åˆ¤æ–­u3è¿˜æ˜¯GigE
     if (MV_E_SUPPORT == nRet)
     {
         stDevInfo.nTLayerType = MV_USB_DEVICE;
@@ -345,7 +349,7 @@ int     CMyCamera::GetAllMatchInfo(OUT unsigned int *nLostFrame, OUT unsigned in
         MV_MATCH_INFO_NET_DETECT stMatchInfoNetDetect;
         struMatchInfo.pInfo = &stMatchInfoNetDetect;
 
-        struMatchInfo.nType = MV_MATCH_TYPE_NET_DETECT; // ch:ÍøÂçÁ÷Á¿ºÍ¶ª°üĞÅÏ¢ | en:Net flow and lsot packet information
+        struMatchInfo.nType = MV_MATCH_TYPE_NET_DETECT; // ch:ç½‘ç»œæµé‡å’Œä¸¢åŒ…ä¿¡æ¯ | en:Net flow and lsot packet information
         memset(struMatchInfo.pInfo, 0, sizeof(MV_MATCH_INFO_NET_DETECT));
         struMatchInfo.nInfoSize = sizeof(MV_MATCH_INFO_NET_DETECT);
 
@@ -365,7 +369,7 @@ int     CMyCamera::GetAllMatchInfo(OUT unsigned int *nLostFrame, OUT unsigned in
         MV_MATCH_INFO_USB_DETECT stMatchInfoNetDetect;
         struMatchInfo.pInfo = &stMatchInfoNetDetect;
 
-        struMatchInfo.nType = MV_MATCH_TYPE_USB_DETECT; // ch:ÍøÂçÁ÷Á¿ºÍ¶ª°üĞÅÏ¢ | en:Net flow and lsot packet information
+        struMatchInfo.nType = MV_MATCH_TYPE_USB_DETECT; // ch:ç½‘ç»œæµé‡å’Œä¸¢åŒ…ä¿¡æ¯ | en:Net flow and lsot packet information
         memset(struMatchInfo.pInfo, 0, sizeof(MV_MATCH_INFO_USB_DETECT));
         struMatchInfo.nInfoSize = sizeof(MV_MATCH_INFO_USB_DETECT);
 
@@ -384,3 +388,6 @@ int     CMyCamera::GetAllMatchInfo(OUT unsigned int *nLostFrame, OUT unsigned in
 }
 
 
+bool CMyCamera::isConnected(){
+    return m_hDevHandle != NULL;
+}

@@ -80,6 +80,9 @@ public:
     // 获取统计参数
     int     GetAllMatchInfo(OUT unsigned int *nLostFrame, OUT unsigned int *nFrameCount);
 
+    // 查看相机状态
+    bool    isConnected();
+    
 private:
 
     void*               m_hDevHandle;
