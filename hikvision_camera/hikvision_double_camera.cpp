@@ -1,6 +1,11 @@
 #include "hikvision_double_camera.h"
 #include "../stereo_lib/stereo_clib.h"
 #include <future>
+#include <iostream>
+#include <filesystem>
+#include <regex>
+#include <string>
+#include <vector>
 
 StereoCamera::StereoCamera()
 {
@@ -16,7 +21,7 @@ StereoCamera::StereoCamera()
         }else{
             if (stDeviceList.nDeviceNum > 0) { // 找到设备了
                 for(auto pDeviceInfo : stDeviceList.pDeviceInfo){
-                    if (pDeviceInfo->nTLayerType == MV_GIGE_DEVICE){
+                    if (pDeviceInfo!=nullptr && pDeviceInfo->nTLayerType == MV_GIGE_DEVICE){
                         int nIp4 = (pDeviceInfo->SpecialInfo.stGigEInfo.nCurrentIp & 0x000000ff);
                         camera_ip_map[nIp4] = *pDeviceInfo;
                     }
@@ -43,13 +48,25 @@ StereoCamera::StereoCamera()
     }
     left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
     right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
+
+	auto cam_init = [](CMyCamera &cam) {
+        auto nPacketSize = cam.GetOptimalPacketSize();
+        cam.SetIntValue("GevSCPSPacketSize",nPacketSize);
+        cam.SetEnumValue("TriggerMode",MV_TRIGGER_MODE_OFF);
+        cam.GetIntValue("PayloadSize",&cam.m_nBufSizeForDriver);
+        cam.m_pBufForDriver = (unsigned char *)malloc(cam.m_nBufSizeForDriver);
+        cam.StartGrabbing();
+	};
 }
 
+
+
 StereoCamera::~StereoCamera(){
-    free(&stDeviceList);
     std::cout << "正关闭左相机..." << std::endl;
+    left_camera.StopGrabbing();
     left_camera.Close();
     std::cout << "正关闭右相机..." << std::endl;
+    right_camera.StopGrabbing();
     right_camera.Close();
 }
 
@@ -57,16 +74,50 @@ void StereoCamera::GrabImageDoubleCamera(){
     auto grab_img = [&](CMyCamera &cam,cv::Mat &out){
         MV_FRAME_OUT_INFO_EX stImageInfo = {0};
         memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
-        cam.GetIntValue("PayloadSize",&cam.m_nBufSizeForDriver);
-        cam.m_pBufForDriver = (unsigned char *)malloc(cam.m_nBufSizeForDriver);
         unsigned int pnDatalen = 0;
         cam.GetOneFrameTimeout(cam.m_pBufForDriver,&pnDatalen,cam.m_nBufSizeForDriver,&stImageInfo,200);
         Convert2Mat(&stImageInfo,cam.m_pBufForDriver,out);
     };
-    auto grab1 = std::async(std::launch::async,grab_img,left_camera,leftImg);
-    auto grab2 = std::async(std::launch::async,grab_img,right_camera,rightImg);
-    grab1.wait();
-    grab2.wait();
+	grab_img(left_camera, leftImg);
+	grab_img(right_camera, rightImg);
+    //auto grab1 = std::async(std::launch::async,grab_img,left_camera,leftImg);
+    //auto grab2 = std::async(std::launch::async,grab_img,right_camera,rightImg);
+    //grab1.wait();
+    //grab2.wait();
+}
+
+void StereoCamera::GrabClibImg(int i){
+    GrabImageDoubleCamera();
+    SaveGrabImg(i);
+}
+
+void StereoCamera::SaveGrabImg(int i){
+    cv::imwrite("images/"+ std::to_string(i) + "_left.bmp", leftImg);
+    cv::imwrite("images/" + std::to_string(i) + "_right.bmp", rightImg);
+}
+
+void StereoCamera::ClibCam(){
+    auto isClibFile = [](std::filesystem::path path)->bool{
+        std::string pattern{"\\d+_\\w*.bmp"};
+        std::regex re(pattern);
+        return std::regex_match(path.string(), re);
+    };
+    std::filesystem::path str("images");
+    std::filesystem::directory_iterator list(str);
+    std::vector<std::string> image_list;
+    for(auto &it:list){
+        if(isClibFile(it.path().filename())){
+            image_list.push_back(it.path().string());
+        }
+    }
+    auto boardSize = cv::Size(4,11);
+    auto squareSize = 14.0;
+    StereoCalibInerAndExter(image_list,boardSize,squareSize,false,true,true);
+}
+
+void StereoCamera::LoadParam(){
+    LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
+    // LoadTransformParam(affine_R, affine_T);
 }
 
 // convert data stream in Mat format

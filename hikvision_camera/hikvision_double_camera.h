@@ -18,12 +18,18 @@ class StereoCamera{
         ~StereoCamera();
     //抓取一对图像，左右双相机 
         void GrabImageDoubleCamera();
+        void GrabClibImg(int i);
+        void SaveGrabImg(int i);
+        void ClibCam();
+		void LoadParam();
         cv::Mat leftImg,rightImg;
+        cv::Mat M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q, affine_R, affine_T;
     private:
         MV_CC_DEVICE_INFO_LIST stDeviceList;
         CMyCamera left_camera;
         CMyCamera right_camera;
         std::map<int, MV_CC_DEVICE_INFO> camera_ip_map;
+	
 };
 
 bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char * pData, cv::Mat& srcImage);

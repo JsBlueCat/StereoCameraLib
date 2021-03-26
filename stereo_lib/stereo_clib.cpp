@@ -288,8 +288,7 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 	}
 }
 
-void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::Mat &R,cv::Mat &T,cv::Mat &R1,
-cv::Mat &P1,cv::Mat &R2,cv::Mat &P2,cv::Mat & Q) {
+void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::Mat &R,cv::Mat &T,cv::Mat &R1,cv::Mat &P1,cv::Mat &R2,cv::Mat &P2,cv::Mat & Q) {
 	cv::FileStorage fs("intrinsics.yml", cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
@@ -445,7 +444,7 @@ void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vec
 }
 
 void MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points,std::vector<std::vector<cv::Point2f>> &right_target_points,cv::Mat &Q, std::vector<cv::Mat> &results){
-	assert(left_target_points.size() == right_target_points());
+	assert(left_target_points.size() == right_target_points.size());
 	results.clear();
 	for(int i = 0; i < left_target_points.size() ;i ++){
 		cv::Mat tmp; 

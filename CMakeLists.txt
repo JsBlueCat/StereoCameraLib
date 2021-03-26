@@ -4,14 +4,21 @@ cmake_minimum_required(VERSION 3.1)
 # Define project name
 
 project(stereo-camera CXX)
+# to solve the gtest
+add_compile_definitions(_HAS_TR1_NAMESPACE )
+
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang|GNU")
         # using Clang or GCC
         # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-std=c++17")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         # using Visual Studio C++
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /w")
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 endif()
-add_compile_definitions(cxx_std_17)
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/dist/bin)
+
 # 添加编译模式
 # set(CMAKE_BUILD_TYPE Release)#compile mode
 
@@ -43,11 +50,10 @@ link_libraries(${OpenCV_LIBS})
 add_subdirectory(3rd_party/google-test)
 add_subdirectory(stereo_lib)
 add_subdirectory(hikvision_camera)
+add_subdirectory(experiment)
 
 # enable CTest testing
 enable_testing()
-# to solve the gtest
-add_compile_definitions(_HAS_TR1_NAMESPACE)
 
 
 # Declare the executable target built from your sources

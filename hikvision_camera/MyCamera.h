@@ -1,12 +1,10 @@
 /************************************************************************/
 /* 以C++接口为基础，对常用函数进行二次封装，方便用户使用                */
 /************************************************************************/
-#pragma once
-#ifndef _MY_CAMERA_H_
-#define _MY_CAMERA_H_
+#pragma once 
 
 #include <stdio.h>
-#include "./include/MvCameraControl.h"
+#include "include/MvCameraControl.h"
 
 class CMyCamera
 {
@@ -78,14 +76,11 @@ public:
     int     GetOptimalPacketSize();
 
     // 获取统计参数
-    int     GetAllMatchInfo(OUT unsigned int *nLostFrame, OUT unsigned int *nFrameCount);
+    int     GetAllMatchInfo(IN void* hDevHandle, IN unsigned int nTLayerTpye, OUT unsigned int *nLostFrame, OUT unsigned int *nFrameCount);
 
-    // 查看相机状态
-    bool    isConnected();
-    
-private:
-
+public:
     void*               m_hDevHandle;
+    unsigned int     m_nTLayerType;
 
 public:
     unsigned char*  m_pBufForSaveImage;         // 用于保存图像的缓存
@@ -95,5 +90,3 @@ public:
     unsigned int    m_nBufSizeForDriver;
 
 };
-
-#endif
