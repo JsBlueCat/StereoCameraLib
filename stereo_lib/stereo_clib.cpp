@@ -376,18 +376,18 @@ void MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Point2f
 	avg.at<double>(1, 0) *= -1;
 }
 
-std::future<std::vector<cv::Vec3f>> DetectCyclesFromWholeImgAsync(cv::Mat &middle){
-	auto canny_func = [&]()-> std::vector<cv::Vec3f> {
+std::future<bool> DetectCyclesFromWholeImgAsync(cv::Mat &middle, std::vector<cv::Vec3f> &circles){
+	auto canny_func = [&]()-> bool {
 		cv::Mat cimg;
-		medianBlur(middle, middle, 5);
-		cvtColor(middle,cimg,cv::COLOR_BGR2GRAY);
+		cimg = middle.clone();
+		medianBlur(cimg, cimg, 5);
+		//cv::cvtColor(middle,cimg,cv::COLOR_BGR2GRAY);
 		GaussianBlur(cimg, cimg, cv::Size(9, 9), 2, 2);
 		//   medianBlur(cimg, cimg, 5);
 		Canny(cimg,cimg,10,250,5);
 		// imshow("canny",cimg);
-		std::vector<cv::Vec3f> circles;
 		HoughCircles(cimg, circles, cv::HOUGH_GRADIENT, 1, 30,100, 30, 10, 120 );
-		return circles;
+		return circles.size() > 0;
 	};
 	return std::async(std::launch::async, canny_func);
 }
@@ -395,9 +395,9 @@ std::future<std::vector<cv::Vec3f>> DetectCyclesFromWholeImgAsync(cv::Mat &middl
 // 从中间图像中获取canny结果,并将图像等分并返回 所需截图区域
 std::vector<cv::Rect> CoraselyFindCp3(cv::Mat& middle){
 	std::vector<cv::Rect> result;
-	auto point_list = DetectCyclesFromWholeImgAsync(middle);
+	std::vector<cv::Vec3f> points;
+	auto point_list = DetectCyclesFromWholeImgAsync(middle, points);
 	point_list.wait();
-	auto points = point_list.get();
 	// 必须找到4个坐标点
 	assert((points.size() % POINTS_ON_EACH_CP3) == 0);
 	auto num_of_cp3 = points.size() /  POINTS_ON_EACH_CP3;
@@ -432,10 +432,13 @@ void MutiFindCp3(cv::Mat &middle_img,std::vector<cv::Rect> &area,std::vector<std
 		auto t1 = FindCp3PointFromOneClipAsync(cached_imgs[i],target_point_list[i]);
 		tasklist.push_back(std::move(t1));
 	}
-	for(auto &&task : tasklist) {task.wait();}
+	for (auto &&task : tasklist) { 
+		task.wait(); 
+		auto flag = task.get();
+	}
 }
 
-void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vector<cv::Rect>& rect_list , cv::Point2f &roi) {
+void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vector<cv::Rect>& rect_list , cv::Point2f roi) {
 	for(int i = 0; i < rect_list.size(); i++ ){
 		for(auto &corner:corner_list[i]){
 			corner+=(cv::Point2f)rect_list[i].tl() + roi;
@@ -443,14 +446,16 @@ void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vec
 	}
 }
 
-void MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points,std::vector<std::vector<cv::Point2f>> &right_target_points,cv::Mat &Q, std::vector<cv::Mat> &results){
+void MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points,std::vector<std::vector<cv::Point2f>> &right_target_points,cv::Mat &Q, std::vector<cv::Mat> &out){
 	assert(left_target_points.size() == right_target_points.size());
-	results.clear();
+	out.clear();
+	std::vector<cv::Mat> results;
 	for(int i = 0; i < left_target_points.size() ;i ++){
 		cv::Mat tmp; 
 		MatchCp3(left_target_points[i],right_target_points[i],Q,tmp);
 		results.push_back(tmp);
 	}
+	out = results;
 }
 
 // void FixROI(std::vector<std::vector<cv::Point2f>> &corners, cv::Point2f &roi) {

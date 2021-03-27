@@ -22,6 +22,8 @@ class StereoCamera{
         void SaveGrabImg(int i);
         void ClibCam();
 		void LoadParam();
+		void SaveTestImg(int i);
+		void MatchSingleFrame(int i,std::vector<cv::Mat> &results);
         cv::Mat leftImg,rightImg;
         cv::Mat M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q, affine_R, affine_T;
     private:

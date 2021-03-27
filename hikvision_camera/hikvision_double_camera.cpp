@@ -1,11 +1,12 @@
 #include "hikvision_double_camera.h"
 #include "../stereo_lib/stereo_clib.h"
 #include <future>
-#include <iostream>
-#include <filesystem>
 #include <regex>
 #include <string>
 #include <vector>
+
+#include <filesystem>
+#include <iostream>
 
 StereoCamera::StereoCamera()
 {
@@ -17,7 +18,8 @@ StereoCamera::StereoCamera()
         if (MV_OK != nRet)
         {
             std::cerr << "查找相机失败! 失败参数：nRet [0x" << nRet << "]" << std::endl;
-            perror("101");
+            // perror("101");
+            return;
         }else{
             if (stDeviceList.nDeviceNum > 0) { // 找到设备了
                 for(auto pDeviceInfo : stDeviceList.pDeviceInfo){
@@ -44,7 +46,8 @@ StereoCamera::StereoCamera()
     }while(times++ < 100);
     if(times > 100) { 
         std::cerr<< "连接失败100次，请检查设备吧..." <<std::endl;
-        perror("102");
+        // perror("102");
+        return;
     }
     left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
     right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
@@ -57,6 +60,8 @@ StereoCamera::StereoCamera()
         cam.m_pBufForDriver = (unsigned char *)malloc(cam.m_nBufSizeForDriver);
         cam.StartGrabbing();
 	};
+	cam_init(left_camera);
+	cam_init(right_camera);
 }
 
 
@@ -71,6 +76,7 @@ StereoCamera::~StereoCamera(){
 }
 
 void StereoCamera::GrabImageDoubleCamera(){
+
     auto grab_img = [&](CMyCamera &cam,cv::Mat &out){
         MV_FRAME_OUT_INFO_EX stImageInfo = {0};
         memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
@@ -96,6 +102,30 @@ void StereoCamera::SaveGrabImg(int i){
     cv::imwrite("images/" + std::to_string(i) + "_right.bmp", rightImg);
 }
 
+void StereoCamera::SaveTestImg(int i) {
+	cv::imwrite("test/" + std::to_string(i) + "_left.bmp", leftImg);
+	cv::imwrite("test/" + std::to_string(i) + "_right.bmp", rightImg);
+	auto save_split_img = [&]() {
+		cv::Mat left, middle, right;
+		auto left_left = cv::Rect(cv::Point(1715, 0), cv::Point(2135, leftImg.rows));
+		auto left_middle = cv::Rect(cv::Point(2135, 0), cv::Point(4709, leftImg.rows));
+		auto left_right = cv::Rect(cv::Point(4709, 0), cv::Point(5112, leftImg.rows));
+		auto right_left = cv::Rect(cv::Point(227, 0), cv::Point(617, leftImg.rows));
+		auto right_middle = cv::Rect(cv::Point(617, 0), cv::Point(3185, leftImg.rows));
+		auto right_right = cv::Rect(cv::Point(3185, 0), cv::Point(3593, leftImg.rows));
+		SplitImg(leftImg, left_left, left_middle, left_right, left, middle, right);
+		cv::imwrite("test/" + std::to_string(i) + "_left_left.bmp", left);
+		cv::imwrite("test/" + std::to_string(i) + "_left_middle.bmp", middle);
+		cv::imwrite("test/" + std::to_string(i) + "_left.bmp", right);
+		SplitImg(rightImg, right_left, right_middle, right_right, left, middle, right);
+		cv::imwrite("test/" + std::to_string(i) + "_right_left.bmp", left);
+		cv::imwrite("test/" + std::to_string(i) + "_right_middle.bmp", middle);
+		cv::imwrite("test/" + std::to_string(i) + "_right_right.bmp", right);
+	};
+	save_split_img();
+}
+
+
 void StereoCamera::ClibCam(){
     auto isClibFile = [](std::filesystem::path path)->bool{
         std::string pattern{"\\d+_\\w*.bmp"};
@@ -105,7 +135,7 @@ void StereoCamera::ClibCam(){
     std::filesystem::path str("images");
     std::filesystem::directory_iterator list(str);
     std::vector<std::string> image_list;
-    for(auto &it:list){
+    for(auto& it:list){
         if(isClibFile(it.path().filename())){
             image_list.push_back(it.path().string());
         }
@@ -119,6 +149,41 @@ void StereoCamera::LoadParam(){
     LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
     // LoadTransformParam(affine_R, affine_T);
 }
+
+void StereoCamera::MatchSingleFrame(int i,std::vector<cv::Mat> &results) {
+	auto left_left = cv::Rect(cv::Point(1715,0), cv::Point(2135, leftImg.rows));
+	auto left_middle = cv::Rect(cv::Point(2135, 0), cv::Point(4709, leftImg.rows));
+	auto left_right = cv::Rect(cv::Point(4709, 0), cv::Point(5112, leftImg.rows));
+	auto right_left = cv::Rect(cv::Point(227, 0), cv::Point(617, leftImg.rows));
+	auto right_middle = cv::Rect(cv::Point(617, 0), cv::Point(3185, leftImg.rows));
+	auto right_right = cv::Rect(cv::Point(3185, 0), cv::Point(3593, leftImg.rows));
+	std::vector<std::vector<cv::Point2f>> left_points, right_points;
+	auto split_img_and_find_point = [&](cv::Rect r1, cv::Rect r2 , cv::Rect r3, cv::Mat &img, std::vector<std::vector<cv::Point2f>>& out) {
+		cv::Mat left, middle, right;
+		SplitImg(img,r1,r2,r3,left,middle,right);
+        auto corase_aera = CoraselyFindCp3(middle);
+		auto save_clip = [&]() {
+			int count = 0;
+			for (auto area : corase_aera){
+				cv::Mat tmp = middle(area);
+				cv::imwrite("current" + std::to_string(++count)+ ".bmp",tmp);
+			}
+		};
+		save_clip();
+		std::vector<std::vector<cv::Point2f>> points(corase_aera.size());
+		MutiFindCp3(middle, corase_aera, points);
+		MutiFixROIList(points, corase_aera, r2.tl());
+		out = points;
+	};
+	split_img_and_find_point(left_left, left_middle, left_right, leftImg, left_points);
+	split_img_and_find_point(right_left, right_middle, right_right, rightImg, right_points);
+	
+	MutiMatchCp3(left_points, right_points, Q, results);
+	for (auto&result : results) {
+		std::cout << result << std::endl;
+	}
+}
+
 
 // convert data stream in Mat format
 bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char * pData, cv::Mat& srcImage)

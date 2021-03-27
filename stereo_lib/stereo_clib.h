@@ -31,11 +31,11 @@ void MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Point2f
 void SplitImg(cv::Mat &img, cv::Rect , cv::Rect , cv::Rect , cv::Mat &, cv::Mat &, cv::Mat &);
 void SplitMutliCp3Img(cv::Mat &img_middle, std::vector<cv::Rect> &areas, std::vector<cv::Mat> &cached_imgs);
 // 使用candy 算子和 高斯模糊查找图片中的原点序列
-std::future<std::vector<cv::Vec3f>> DetectCyclesFromWholeImgAsync(cv::Mat &middle);
+std::future<bool> DetectCyclesFromWholeImgAsync(cv::Mat &middle, std::vector<cv::Vec3f> &circles);
 std::vector<cv::Rect> CoraselyFindCp3(cv::Mat& middle);
 
-void MutiFindCp3(cv::Mat &left_middle_img,cv::Mat &right_middle_img,std::vector<cv::Rect> &left,std::vector<cv::Rect> &right);
-void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vector<cv::Rect>& rect_list);
+void MutiFindCp3(cv::Mat &middle_img,std::vector<cv::Rect> &area,std::vector<std::vector<cv::Point2f>> &target_point_list);
+void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vector<cv::Rect>& rect_list, cv::Point2f roi);
 void MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &,std::vector<std::vector<cv::Point2f>> &,cv::Mat &, std::vector<cv::Mat> &);
 
 // static void FixROI(std::vector<cv::Point2f>& corners, cv::Point2f &roi);
