@@ -29,7 +29,7 @@ SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/dist/bin)
 # Find OpenCV, you may need to set OpenCV_DIR variable
 # to the absolute path to the directory containing OpenCVConfig.cmake file
 # via the command line or GUI
-find_package(OpenCV 3.4 REQUIRED)
+find_package(OpenCV 3.4 REQUIRED HINTS "D:\\opencv-3.4.7\\build")
 
 # If the package has been found, several variables will
 # be set, you can find the full list with descriptions

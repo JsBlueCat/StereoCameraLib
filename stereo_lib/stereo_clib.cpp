@@ -380,13 +380,13 @@ std::future<bool> DetectCyclesFromWholeImgAsync(cv::Mat &middle, std::vector<cv:
 	auto canny_func = [&]()-> bool {
 		cv::Mat cimg;
 		cimg = middle.clone();
-		medianBlur(cimg, cimg, 5);
+		// medianBlur(cimg, cimg, 5);
 		//cv::cvtColor(middle,cimg,cv::COLOR_BGR2GRAY);
 		GaussianBlur(cimg, cimg, cv::Size(9, 9), 2, 2);
 		//   medianBlur(cimg, cimg, 5);
-		Canny(cimg,cimg,10,250,5);
+		// Canny(cimg,cimg,10,250,5);
 		// imshow("canny",cimg);
-		HoughCircles(cimg, circles, cv::HOUGH_GRADIENT, 1, 30,100, 30, 10, 120 );
+		HoughCircles(cimg, circles, cv::HOUGH_GRADIENT, 1, 30 ,200, 30 , 5, 100 );
 		return circles.size() > 0;
 	};
 	return std::async(std::launch::async, canny_func);

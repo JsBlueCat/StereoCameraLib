@@ -19,6 +19,23 @@ StereoCamera* StereoCamera::GetInstance(){
     }
 }
 
+bool StereoCamera::QueryCamera(int id){
+    switch (id)
+    {
+    case /* constant-expression */ 1 :
+        return left_camera.m_hDevHandle != NULL;
+        break;
+    
+    case /* constant-expression */ 2 :
+        return right_camera.m_hDevHandle != NULL;
+        break;
+    
+    default:
+        break;
+    }
+    return false;
+}
+
 StereoCamera::StereoCamera()
 {
     std::cout << "查找已连接的设备." << std::endl;
@@ -54,9 +71,9 @@ StereoCamera::StereoCamera()
                  std::cerr<< "未连接到设备，请检查连接吧..." <<std::endl;
             }
         }
-    }while(times++ < 100);
-    if(times > 100) { 
-        std::cerr<< "连接失败100次，请检查设备吧..." <<std::endl;
+    }while(times++ < 20);
+    if(times > 20) { 
+        std::cerr<< "连接失败20次，请检查设备吧..." <<std::endl;
         // perror("102");
         return;
     }
@@ -113,6 +130,16 @@ void StereoCamera::SaveGrabImg(int i){
     cv::imwrite("images/" + std::to_string(i) + "_right.bmp", rightImg);
 }
 
+void StereoCamera::RemapImg(){
+    cv::Mat map11, map12, map21, map22;
+    cv::Mat img1r, img2r;
+    initUndistortRectifyMap(M1, D1, R1, P1, leftImg.size(), CV_16SC2, map11, map12);
+    initUndistortRectifyMap(M2, D2, R2, P2, leftImg.size(), CV_16SC2, map21, map22);
+
+    remap(leftImg, img1r, map11, map12, cv::INTER_LINEAR);
+    remap(rightImg, img2r, map21, map22, cv::INTER_LINEAR);
+}
+
 void StereoCamera::SaveTestImg(int i) {
 	cv::imwrite("test/" + std::to_string(i) + "_left.bmp", leftImg);
 	cv::imwrite("test/" + std::to_string(i) + "_right.bmp", rightImg);
@@ -127,7 +154,7 @@ void StereoCamera::SaveTestImg(int i) {
 		SplitImg(leftImg, left_left, left_middle, left_right, left, middle, right);
 		cv::imwrite("test/" + std::to_string(i) + "_left_left.bmp", left);
 		cv::imwrite("test/" + std::to_string(i) + "_left_middle.bmp", middle);
-		cv::imwrite("test/" + std::to_string(i) + "_left.bmp", right);
+		cv::imwrite("test/" + std::to_string(i) + "_left_right.bmp", right);
 		SplitImg(rightImg, right_left, right_middle, right_right, left, middle, right);
 		cv::imwrite("test/" + std::to_string(i) + "_right_left.bmp", left);
 		cv::imwrite("test/" + std::to_string(i) + "_right_middle.bmp", middle);

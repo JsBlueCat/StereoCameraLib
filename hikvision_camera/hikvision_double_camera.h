@@ -3,8 +3,7 @@
 #include <memory>
 #include <map>
 #include "MyCamera.h"
-#include "opencv2/imgproc/imgproc.hpp"
-#include "opencv2/highgui/highgui.hpp"
+#include <opencv2/opencv.hpp>
 
 #define LEFT_CAMERA_IP4 207
 #define RIGHT_CAMERA_IP4 122
@@ -13,6 +12,7 @@ class StereoCamera{
 
     public:
         static StereoCamera* GetInstance();
+        static StereoCamera* instance;
     // 构造函数
         StereoCamera();
     // 析构函数
@@ -25,10 +25,11 @@ class StereoCamera{
 		void LoadParam();
 		void SaveTestImg(int i);
 		void MatchSingleFrame(int i,std::vector<cv::Mat> &results);
+        bool QueryCamera(int);
+        void RemapImg();
         cv::Mat leftImg,rightImg;
         cv::Mat M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q, affine_R, affine_T;
     private:
-        static StereoCamera* instance;
         MV_CC_DEVICE_INFO_LIST stDeviceList;
         CMyCamera left_camera;
         CMyCamera right_camera;

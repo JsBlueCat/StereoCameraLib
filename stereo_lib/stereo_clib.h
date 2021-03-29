@@ -6,6 +6,7 @@ const int POINTS_ON_EACH_CP3 = 4;
 
 //===========================================
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
 #include<iostream>
 #include <vector>
 #include <string>
