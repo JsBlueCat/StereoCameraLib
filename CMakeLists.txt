@@ -48,7 +48,6 @@ link_libraries(${OpenCV_LIBS})
 #############################################
 # Unit tests
 add_subdirectory(3rd_party/google-test)
-add_subdirectory(stereo_lib)
 add_subdirectory(hikvision_camera)
 add_subdirectory(experiment)
 
@@ -80,11 +79,11 @@ FILE(GLOB MYCAMERALIB "hikvision_camera/lib/MvCameraControl*")
 
 MESSAGE(STATUS ${HIKVISION_HEAEDERS})
 
-install(FILES ${HIKVISION_HEAEDERS} ${STEREO_LIB_HEADERS} 
+install(FILES ${HIKVISION_HEAEDERS}
 DESTINATION ${PROJECT_SOURCE_DIR}/package/include/
 )
 
-install(TARGETS hikvision_camera STEREO_LIB
+install(TARGETS hikvision_camera
 EXPORT stereo_camera_lib 
 LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/package/lib/
 ARCHIVE DESTINATION  ${PROJECT_SOURCE_DIR}/package/lib/

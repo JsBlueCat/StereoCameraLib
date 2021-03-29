@@ -3,6 +3,7 @@
 #include <memory>
 #include <map>
 #include "MyCamera.h"
+#include "stereo_clib.h"
 #include <opencv2/opencv.hpp>
 
 #define LEFT_CAMERA_IP4 207

@@ -1,5 +1,4 @@
 #include "hikvision_double_camera.h"
-#include "../stereo_lib/stereo_clib.h"
 #include <future>
 #include <regex>
 #include <string>
@@ -11,6 +10,7 @@
 StereoCamera* StereoCamera::instance{nullptr};
 
 StereoCamera* StereoCamera::GetInstance(){
+    std::cout << "get instance" << std::endl;
     if(instance==nullptr){
         instance = new StereoCamera();
         return instance;
