@@ -12,6 +12,7 @@
 class StereoCamera{
 
     public:
+        static StereoCamera* GetInstance();
     // 构造函数
         StereoCamera();
     // 析构函数
@@ -27,6 +28,7 @@ class StereoCamera{
         cv::Mat leftImg,rightImg;
         cv::Mat M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q, affine_R, affine_T;
     private:
+        static StereoCamera* instance;
         MV_CC_DEVICE_INFO_LIST stDeviceList;
         CMyCamera left_camera;
         CMyCamera right_camera;

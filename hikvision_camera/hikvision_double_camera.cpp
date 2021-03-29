@@ -8,6 +8,17 @@
 #include <filesystem>
 #include <iostream>
 
+StereoCamera* StereoCamera::instance{nullptr};
+
+StereoCamera* StereoCamera::GetInstance(){
+    if(instance==nullptr){
+        instance = new StereoCamera();
+        return instance;
+    }else{
+        return instance;
+    }
+}
+
 StereoCamera::StereoCamera()
 {
     std::cout << "查找已连接的设备." << std::endl;

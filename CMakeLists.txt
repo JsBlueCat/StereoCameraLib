@@ -66,7 +66,7 @@ target_include_directories(unit_test PUBLIC "${PROJECT_SOURCE_DIR}/hikvision_cam
 
 target_link_libraries(unit_test
 stereo_camera::hikvision_camera
-GTest::GTest 
+GTest::GTest
 GTest::Main
 )
 
@@ -75,6 +75,22 @@ add_test(test_all unit_test)
 
 #install 
 install(CODE "MESSAGE(\"安装双目标定链接库.\")")
-install(TARGETS unit_test
-        CONFIGURATIONS Debug
-        RUNTIME DESTINATION "${PROJECT_SOURCE_DIR}/dist/bin")
+FIlE(GLOB HIKVISION_HEAEDERS "hikvision_camera/*.h")
+FILE(GLOB MYCAMERALIB "hikvision_camera/lib/MvCameraControl*")
+
+MESSAGE(STATUS ${HIKVISION_HEAEDERS})
+
+install(FILES ${HIKVISION_HEAEDERS} ${STEREO_LIB_HEADERS} 
+DESTINATION ${PROJECT_SOURCE_DIR}/package/include/
+)
+
+install(TARGETS hikvision_camera STEREO_LIB
+EXPORT stereo_camera_lib 
+LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/package/lib/
+ARCHIVE DESTINATION  ${PROJECT_SOURCE_DIR}/package/lib/
+INCLUDES DESTINATION  ${PROJECT_SOURCE_DIR}/package/include/
+)
+
+install(FILES ${MYCAMERALIB}
+DESTINATION ${PROJECT_SOURCE_DIR}/package/lib/
+)
