@@ -73,22 +73,21 @@ StereoCamera::StereoCamera()
     }while(times++ < 20);
     if(times > 20) { 
         std::cerr<< "连接失败20次，请检查设备吧..." <<std::endl;
-        // perror("102");
-        return;
-    }
-    left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
-    right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
+    }else{
+        left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
+        right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
 
-	auto cam_init = [](CMyCamera &cam) {
-        auto nPacketSize = cam.GetOptimalPacketSize();
-        cam.SetIntValue("GevSCPSPacketSize",nPacketSize);
-        cam.SetEnumValue("TriggerMode",MV_TRIGGER_MODE_OFF);
-        cam.GetIntValue("PayloadSize",&cam.m_nBufSizeForDriver);
-        cam.m_pBufForDriver = (unsigned char *)malloc(cam.m_nBufSizeForDriver);
-        cam.StartGrabbing();
-	};
-	cam_init(left_camera);
-	cam_init(right_camera);
+        auto cam_init = [](CMyCamera &cam) {
+            auto nPacketSize = cam.GetOptimalPacketSize();
+            cam.SetIntValue("GevSCPSPacketSize",nPacketSize);
+            cam.SetEnumValue("TriggerMode",MV_TRIGGER_MODE_OFF);
+            cam.GetIntValue("PayloadSize",&cam.m_nBufSizeForDriver);
+            cam.m_pBufForDriver = (unsigned char *)malloc(cam.m_nBufSizeForDriver);
+            cam.StartGrabbing();
+        };
+        cam_init(left_camera);
+        cam_init(right_camera);
+    }
 }
 
 

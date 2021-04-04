@@ -1,5 +1,5 @@
 #include "MyCamera.h"
-#include <string.h>
+#include <string>
 
 CMyCamera::CMyCamera()
 {
