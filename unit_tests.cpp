@@ -20,6 +20,6 @@ TEST_F(CameraTests, fileDir ){
 }
 
 TEST_F(CameraTests, test_stereo_camera){
-    // auto cam = new StereoCamera();
-    // delete cam;
+    auto cam = new StereoCamera();
+    delete cam;
 }
