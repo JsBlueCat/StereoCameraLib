@@ -65,5 +65,8 @@ install_manifest.txt
 .vs
 
 /dist
-/package
+node_modules/
+package-lock.json
+package/lib
+package/include
 *.log
