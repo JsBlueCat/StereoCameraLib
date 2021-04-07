@@ -1,12 +1,11 @@
 #include <iostream>
 #include <fstream>
-#include "../hikvision_camera/hikvision_double_camera.h"
+#include "hikvision_double_camera.h"
 
 int main(){
-    system("chcp 65001");
     auto Fine_Tune_Device = new StereoCamera();
     int b = 1;
-	// 左右的对
+
 	int count = 0;
 	std::cout << "1 continue , 0 quit , max 30..." << std::endl;
 	while (std::cin >> b, b) {

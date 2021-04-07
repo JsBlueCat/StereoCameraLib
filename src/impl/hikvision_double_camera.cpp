@@ -37,42 +37,42 @@ bool StereoCamera::QueryCamera(int id){
 
 StereoCamera::StereoCamera()
 {
-    std::cout << "查找已连接的设备." << std::endl;
+    std::cout << "find the connected device" << std::endl;
     memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
     auto times=1;
     do{
         int nRet = left_camera.EnumDevices(&stDeviceList);
         if (MV_OK != nRet)
         {
-            std::cerr << "查找相机失败! 失败参数：nRet [0x" << nRet << "]" << std::endl;
+            std::cerr << "find camera failed! code ：nRet [0x" << nRet << "]" << std::endl;
             // perror("101");
             return;
         }else{
-            if (stDeviceList.nDeviceNum > 0) { // 找到设备了
+            if (stDeviceList.nDeviceNum > 0) { // find device 
                 for(auto pDeviceInfo : stDeviceList.pDeviceInfo){
                     if (pDeviceInfo!=nullptr && pDeviceInfo->nTLayerType == MV_GIGE_DEVICE){
                         int nIp4 = (pDeviceInfo->SpecialInfo.stGigEInfo.nCurrentIp & 0x000000ff);
                         camera_ip_map[nIp4] = *pDeviceInfo;
                     }
                 }
-                auto left = false ,right = false; // 设置没找到相机
+                auto left = false ,right = false; // init
                 for(auto iter = camera_ip_map.begin(); iter != camera_ip_map.end(); iter++){
                     if(iter->first == LEFT_CAMERA_IP4) left = true;
                     if(iter->first == RIGHT_CAMERA_IP4) right = true;
                 }
-                if(!left) {std::cerr << "左相机未找到，正在尝试重连..." << std::endl;}
-                if(!right) {std::cerr << "右相机未找到，正在尝试重连..." << std::endl;}
+                if(!left) {std::cerr << "can not find left camera , reconnecting..." << std::endl;}
+                if(!right) {std::cerr << "can not find right camera , reconnecting..." << std::endl;}
                 if(left && right) { 
-                    std::cout <<  "左右相机连接完成" << std::endl;
+                    std::cout <<  "connect left and right camera done!" << std::endl;
                     break; 
                 }
             }else{
-                 std::cerr<< "未连接到设备，请检查连接吧..." <<std::endl;
+                 std::cerr<< "can not find camera , please check..." <<std::endl;
             }
         }
     }while(times++ < 20);
     if(times > 20) { 
-        std::cerr<< "连接失败20次，请检查设备吧..." <<std::endl;
+        std::cerr<< "fail with connect 20 times , abort..." <<std::endl;
     }else{
         left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
         right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
@@ -93,10 +93,10 @@ StereoCamera::StereoCamera()
 
 
 StereoCamera::~StereoCamera(){
-    std::cout << "正关闭左相机..." << std::endl;
+    std::cout << "close left camera..." << std::endl;
     left_camera.StopGrabbing();
     left_camera.Close();
-    std::cout << "正关闭右相机..." << std::endl;
+    std::cout << "close right camera..." << std::endl;
     right_camera.StopGrabbing();
     right_camera.Close();
 }

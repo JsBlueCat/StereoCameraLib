@@ -1,40 +1,23 @@
-# cmake needs this line
 cmake_minimum_required(VERSION 3.1)
-
-# Define project name
-
-project(stereo-camera CXX)
-# to solve the gtest
-add_compile_definitions(_HAS_TR1_NAMESPACE )
+project(stereocamera CXX)
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang|GNU")
         # using Clang or GCC
         # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-std=c++17")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
         # using Visual Studio C++
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+        add_compile_definitions(_HAS_TR1_NAMESPACE )
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /D_SILENCE_TR1_NAMESPACE_DEPRECATION_WARNING")
 endif()
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_CXX_EXTENSIONS OFF)
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/dist/bin)
 
-# 添加编译模式
-# set(CMAKE_BUILD_TYPE Release)#compile mode
-
-# # 设定编译输出的位置
-# set(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/dist/bin)
-# set(LIBRARY_OUTPUT_DIRECTORY ${PROJECT_SOURCE_DIR}/dist/lib)
-
-# Find OpenCV, you may need to set OpenCV_DIR variable
-# to the absolute path to the directory containing OpenCVConfig.cmake file
-# via the command line or GUI
 find_package(OpenCV 3.4 REQUIRED HINTS "D:\\opencv-3.4.7\\build")
 
-# If the package has been found, several variables will
-# be set, you can find the full list with descriptions
-# in the OpenCVConfig.cmake file.
-# Print some message showing some of them
+include_directories(${OpenCV_INCLUDE_DIRS})
+
 message(STATUS "OpenCV library status:")
 message(STATUS "    config: ${OpenCV_DIR}")
 message(STATUS "    version: ${OpenCV_VERSION}")
@@ -42,54 +25,42 @@ message(STATUS "    libraries: ${OpenCV_LIBS}")
 message(STATUS "    include path: ${OpenCV_INCLUDE_DIRS}")
 
 
+FILE(GLOB CAMERA_SOURCE_FILES "${PROJECT_SOURCE_DIR}/src/impl/*.cpp")
+FILE(GLOB CAMERA_HEADER_FILES "${PROJECT_SOURCE_DIR}/src/include/*.h")
+FILE(GLOB HIKILIB "${PROJECT_SOURCE_DIR}/src/lib/MvCameraControl.*")
 
-include_directories(${OpenCV_INCLUDE_DIRS})
-link_libraries(${OpenCV_LIBS})
-#############################################
-# Unit tests
-add_subdirectory(3rd_party/google-test)
-add_subdirectory(hikvision_camera)
-add_subdirectory(experiment)
+include_directories(${PROJECT_SOURCE_DIR}/src/include)
+add_library(stereocamera STATIC ${CAMERA_SOURCE_FILES}) 
+# target_include_directories(stereocamera PUBLIC ${OpenCV_INCLUDE_DIRS})
+target_link_libraries(stereocamera ${OpenCV_LIBS} ${HIKILIB})
+set_target_properties(stereocamera  PROPERTIES 
+  ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/package/lib/"
+  LIBRARY_OUTPUT_DIRECTORY "${PROJECT_SOURCE_DIR}/package/lib/"
+)
+
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/dist/bin)
+
+add_executable(stereo_grab "${PROJECT_SOURCE_DIR}/src/experiment/stereo_grab.cpp" ${CAMERA_SOURCE_FILES})
+target_link_libraries(stereo_grab ${OpenCV_LIBS} ${HIKILIB})
+
+add_executable(stereo_match "${PROJECT_SOURCE_DIR}/src/experiment/stereo_match.cpp" ${CAMERA_SOURCE_FILES})
+target_link_libraries(stereo_match ${OpenCV_LIBS} ${HIKILIB})
+
+
 
 # enable CTest testing
+add_subdirectory(3rd_party/google-test)
 enable_testing()
 
+MESSAGE(STATUS "INSTALL ${CAMERA_HEADER_FILES}")
 
-# Declare the executable target built from your sources
-add_executable(example example.cpp)
-add_executable(unit_test unit_tests.cpp)
-
-# Link your application with OpenCV libraries
-target_link_libraries(example  PRIVATE ${OpenCV_LIBS})
-target_include_directories(unit_test PUBLIC "${PROJECT_SOURCE_DIR}/hikvision_camera")
-
-target_link_libraries(unit_test
-stereo_camera::hikvision_camera
-GTest::GTest
-GTest::Main
+install(FILES ${CAMERA_HEADER_FILES}
+DESTINATION "${PROJECT_SOURCE_DIR}/package/include/"
 )
 
-add_test(test_all unit_test)
+FILE(GLOB CAMERADLL "${PROJECT_SOURCE_DIR}/build/Debug/stereocamera*.dll")
 
-
-#install 
-install(CODE "MESSAGE(\"安装双目标定链接库.\")")
-FIlE(GLOB HIKVISION_HEAEDERS "hikvision_camera/*.h")
-FILE(GLOB MYCAMERALIB "hikvision_camera/lib/MvCameraControl*")
-
-MESSAGE(STATUS ${HIKVISION_HEAEDERS})
-
-install(FILES ${HIKVISION_HEAEDERS}
-DESTINATION ${PROJECT_SOURCE_DIR}/package/include/
-)
-
-install(TARGETS hikvision_camera
-EXPORT stereo_camera_lib 
-LIBRARY DESTINATION ${PROJECT_SOURCE_DIR}/package/lib/
-ARCHIVE DESTINATION  ${PROJECT_SOURCE_DIR}/package/lib/
-INCLUDES DESTINATION  ${PROJECT_SOURCE_DIR}/package/include/
-)
-
-install(FILES ${MYCAMERALIB}
-DESTINATION ${PROJECT_SOURCE_DIR}/package/lib/
+MESSAGE(STATUS "INSTALL ${CAMERADLL}")
+install(FILES ${CAMERADLL}
+DESTINATION "${PROJECT_SOURCE_DIR}/package/lib/"
 )

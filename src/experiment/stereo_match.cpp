@@ -1,12 +1,10 @@
 #include <iostream>
 #include <fstream>
-#include "../hikvision_camera/hikvision_double_camera.h"
-#include <fstream>
 #include <sstream>
 #include <vector>
+#include "hikvision_double_camera.h"
 
 int main() {
-	system("chcp 65001");
 	auto Fine_Tune_Device = new StereoCamera();
 	Fine_Tune_Device->LoadParam();
 	int b = 1;

@@ -9,16 +9,16 @@
 #define LEFT_CAMERA_IP4 207
 #define RIGHT_CAMERA_IP4 122
 
-class StereoCamera{
+class _declspec(dllexport) StereoCamera{
 
     public:
         static StereoCamera* GetInstance();
         static StereoCamera* instance;
-    // 构造函数
+
         StereoCamera();
-    // 析构函数
+
         ~StereoCamera();
-    //抓取一对图像，左右双相机 
+
         void GrabImageDoubleCamera();
         void GrabClibImg(int i);
         void SaveGrabImg(int i);
@@ -38,5 +38,5 @@ class StereoCamera{
 	
 };
 
-bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char * pData, cv::Mat& srcImage);
-int RGB2BGR( unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight);
+_declspec(dllexport) bool Convert2Mat(MV_FRAME_OUT_INFO_EX* pstImageInfo, unsigned char * pData, cv::Mat& srcImage);
+_declspec(dllexport) int RGB2BGR( unsigned char* pRgbData, unsigned int nWidth, unsigned int nHeight);

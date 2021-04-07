@@ -1,11 +1,11 @@
 /************************************************************************/
-/* ÒÔC++½Ó¿ÚÎª»ù´¡£¬¶Ô³£ÓÃº¯Êý½øÐÐ¶þ´Î·â×°£¬·½±ãÓÃ»§Ê¹ÓÃ                */
+/* ï¿½ï¿½C++ï¿½Ó¿ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô³ï¿½ï¿½Ãºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Î·ï¿½×°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½Ê¹ï¿½ï¿½                */
 /************************************************************************/
 #pragma once 
 
 #include "MvCameraControl.h"
 
-class CMyCamera
+class  CMyCamera
 {
 public:
     CMyCamera();
@@ -13,68 +13,68 @@ public:
 
     static int EnumDevices(MV_CC_DEVICE_INFO_LIST* pstDevList);
 
-    // ch:´ò¿ªÉè±¸ | en:Open Device
+    // ch:ï¿½ï¿½ï¿½è±¸ | en:Open Device
     int     Open(MV_CC_DEVICE_INFO* pstDeviceInfo);
 
-    // ch:¹Ø±ÕÉè±¸ | en:Close Device
+    // ch:ï¿½Ø±ï¿½ï¿½è±¸ | en:Close Device
     int     Close();
 
-    // ch:¿ªÆô×¥Í¼ | en:Start Grabbing
+    // ch:ï¿½ï¿½ï¿½ï¿½×¥Í¼ | en:Start Grabbing
     int     StartGrabbing();
 
     // ch:Í£Ö¹×¥Í¼ | en:Stop Grabbing
     int     StopGrabbing();
 
-    // ch:Ö÷¶¯»ñÈ¡Ò»Ö¡Í¼ÏñÊý¾Ý | en:Get one frame initiatively
+    // ch:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Ò»Ö¡Í¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ | en:Get one frame initiatively
     int     GetOneFrameTimeout(unsigned char* pData, unsigned int* pnDataLen, unsigned int nDataSize, MV_FRAME_OUT_INFO_EX* pFrameInfo, int nMsec);
 
-    // ch:ÉèÖÃÏÔÊ¾´°¿Ú¾ä±ú | en:Set Display Window Handle
+    // ch:ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ú¾ï¿½ï¿½ | en:Set Display Window Handle
     int     Display(void* hWnd);
 
-    // ch:±£´æÍ¼Æ¬ | en:save image
+    // ch:ï¿½ï¿½ï¿½ï¿½Í¼Æ¬ | en:save image
     int     SaveImage(MV_SAVE_IMAGE_PARAM_EX* pstParam);
 
-    // ch:×¢²áÍ¼ÏñÊý¾Ý»Øµ÷ | en:Register Image Data CallBack
+    // ch:×¢ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½ï¿½Ý»Øµï¿½ | en:Register Image Data CallBack
     int     RegisterImageCallBack(void(__stdcall* cbOutput)(unsigned char * pData, MV_FRAME_OUT_INFO_EX* pFrameInfo, void* pUser),
                                     void* pUser);
 
-    // ch:×¢²áÏûÏ¢Òì³£»Øµ÷ | en:Register Message Exception CallBack
+    // ch:×¢ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ì³£ï¿½Øµï¿½ | en:Register Message Exception CallBack
     int     RegisterExceptionCallBack(void(__stdcall* cbException)(unsigned int nMsgType, void* pUser),
                                         void* pUser);
 
-    // ch:»ñÈ¡IntÐÍ²ÎÊý£¬Èç WidthºÍHeight£¬ÏêÏ¸ÄÚÈÝ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼þ
+    // ch:ï¿½ï¿½È¡Intï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Widthï¿½ï¿½Heightï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½Ý²Î¿ï¿½SDKï¿½ï¿½×°Ä¿Â¼ï¿½Âµï¿½ MvCameraNode.xlsx ï¿½Ä¼ï¿½
     // en:Get Int type parameters, such as Width and Height, for details please refer to MvCameraNode.xlsx file under SDK installation directory
     int     GetIntValue(IN const char* strKey, OUT unsigned int *pnValue);
     int     SetIntValue(IN const char* strKey, IN unsigned int nValue);
 
-    // ch:»ñÈ¡FloatÐÍ²ÎÊý£¬Èç ExposureTimeºÍGain£¬ÏêÏ¸ÄÚÈÝ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼þ
+    // ch:ï¿½ï¿½È¡Floatï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ExposureTimeï¿½ï¿½Gainï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½Ý²Î¿ï¿½SDKï¿½ï¿½×°Ä¿Â¼ï¿½Âµï¿½ MvCameraNode.xlsx ï¿½Ä¼ï¿½
     // en:Get Float type parameters, such as ExposureTime and Gain, for details please refer to MvCameraNode.xlsx file under SDK installation directory
     int     GetFloatValue(IN const char* strKey, OUT float *pfValue);
     int     SetFloatValue(IN const char* strKey, IN float fValue);
 
-    // ch:»ñÈ¡EnumÐÍ²ÎÊý£¬Èç PixelFormat£¬ÏêÏ¸ÄÚÈÝ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼þ
+    // ch:ï¿½ï¿½È¡Enumï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ PixelFormatï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½Ý²Î¿ï¿½SDKï¿½ï¿½×°Ä¿Â¼ï¿½Âµï¿½ MvCameraNode.xlsx ï¿½Ä¼ï¿½
     // en:Get Enum type parameters, such as PixelFormat, for details please refer to MvCameraNode.xlsx file under SDK installation directory
     int     GetEnumValue(IN const char* strKey, OUT unsigned int *pnValue);
     int     SetEnumValue(IN const char* strKey, IN unsigned int nValue);
 
-    // ch:»ñÈ¡BoolÐÍ²ÎÊý£¬Èç ReverseX£¬ÏêÏ¸ÄÚÈÝ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼þ
+    // ch:ï¿½ï¿½È¡Boolï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ReverseXï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½Ý²Î¿ï¿½SDKï¿½ï¿½×°Ä¿Â¼ï¿½Âµï¿½ MvCameraNode.xlsx ï¿½Ä¼ï¿½
     // en:Get Bool type parameters, such as ReverseX, for details please refer to MvCameraNode.xlsx file under SDK installation directory
     int     GetBoolValue(IN const char* strKey, OUT bool *pbValue);
     int     SetBoolValue(IN const char* strKey, IN bool bValue);
 
-    // ch:»ñÈ¡StringÐÍ²ÎÊý£¬Èç DeviceUserID£¬ÏêÏ¸ÄÚÈÝ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼þUserSetSave
+    // ch:ï¿½ï¿½È¡Stringï¿½Í²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ DeviceUserIDï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½Ý²Î¿ï¿½SDKï¿½ï¿½×°Ä¿Â¼ï¿½Âµï¿½ MvCameraNode.xlsx ï¿½Ä¼ï¿½UserSetSave
     // en:Get String type parameters, such as DeviceUserID, for details please refer to MvCameraNode.xlsx file under SDK installation directory
     int     GetStringValue(IN const char* strKey, IN OUT char* strValue, IN unsigned int nSize);
     int     SetStringValue(IN const char* strKey, IN const char * strValue);
 
-    // ch:Ö´ÐÐÒ»´ÎCommandÐÍÃüÁî£¬Èç UserSetSave£¬ÏêÏ¸ÄÚÈÝ²Î¿¼SDK°²×°Ä¿Â¼ÏÂµÄ MvCameraNode.xlsx ÎÄ¼þ
+    // ch:Ö´ï¿½ï¿½Ò»ï¿½ï¿½Commandï¿½ï¿½ï¿½ï¿½ï¿½î£¬ï¿½ï¿½ UserSetSaveï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½ï¿½Ý²Î¿ï¿½SDKï¿½ï¿½×°Ä¿Â¼ï¿½Âµï¿½ MvCameraNode.xlsx ï¿½Ä¼ï¿½
     // en:Execute Command once, such as UserSetSave, for details please refer to MvCameraNode.xlsx file under SDK installation directory
     int     CommandExecute(IN const char* strKey);
 
-    // ch:Ì½²âÍøÂç×î¼Ñ°ü´óÐ¡(Ö»¶ÔGigEÏà»úÓÐÐ§) | en:Detection network optimal package size(It only works for the GigE camera)
+    // ch:Ì½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ°ï¿½ï¿½ï¿½Ð¡(Ö»ï¿½ï¿½GigEï¿½ï¿½ï¿½ï¿½ï¿½Ð§) | en:Detection network optimal package size(It only works for the GigE camera)
     int     GetOptimalPacketSize();
 
-    // »ñÈ¡Í³¼Æ²ÎÊý
+    // ï¿½ï¿½È¡Í³ï¿½Æ²ï¿½ï¿½ï¿½
     int     GetAllMatchInfo(IN void* hDevHandle, IN unsigned int nTLayerTpye, OUT unsigned int *nLostFrame, OUT unsigned int *nFrameCount);
 
 public:
@@ -82,10 +82,10 @@ public:
     unsigned int     m_nTLayerType;
 
 public:
-    unsigned char*  m_pBufForSaveImage;         // ÓÃÓÚ±£´æÍ¼ÏñµÄ»º´æ
+    unsigned char*  m_pBufForSaveImage;         // ï¿½ï¿½ï¿½Ú±ï¿½ï¿½ï¿½Í¼ï¿½ï¿½Ä»ï¿½ï¿½ï¿½
     unsigned int    m_nBufSizeForSaveImage;
 
-    unsigned char*  m_pBufForDriver;            // ÓÃÓÚ´ÓÇý¶¯»ñÈ¡Í¼ÏñµÄ»º´æ
+    unsigned char*  m_pBufForDriver;            // ï¿½ï¿½ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡Í¼ï¿½ï¿½Ä»ï¿½ï¿½ï¿½
     unsigned int    m_nBufSizeForDriver;
 
 };
