@@ -12,7 +12,7 @@ int main() {
 	int count = 1;
 	std::cout << "1 continue , 0 quit , max 30..." << std::endl;
 	std::vector<cv::Mat> results;
-	auto const &config = Config::get_single("D://Debug",cv::Size(8,2),40);
+	auto const &config = Config::get_single("D://Debug",cv::Size(8,2),30);
 	std::ofstream outfile(config.root_path / "celiang.txt", std::ios::app);
 	while (std::cin >> b, b) {
 		Fine_Tune_Device->GrabImageDoubleCamera();

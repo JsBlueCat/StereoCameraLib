@@ -9,6 +9,7 @@ int main() {
 
   int count = 0;
   std::cout << "1 continue , 0 quit , max 30..." << std::endl;
+	auto const &config = Config::get_single("D://Debug",cv::Size(8,2),30);
   while (std::cin >> b, b) {
     if (count > 30)
       break;
