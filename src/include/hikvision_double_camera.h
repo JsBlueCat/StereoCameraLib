@@ -9,14 +9,13 @@
 #define LEFT_CAMERA_IP4 207
 #define RIGHT_CAMERA_IP4 122
 
-class _declspec(dllexport) StereoCamera{
+class /*_declspec(dllexport)*/ StereoCamera{
 
     public:
         static StereoCamera* GetInstance();
         static StereoCamera* instance;
 
         StereoCamera();
-
         ~StereoCamera();
 
         void GrabImageDoubleCamera();

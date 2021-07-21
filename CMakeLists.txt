@@ -49,9 +49,12 @@ target_link_libraries(stereo_match ${OpenCV_LIBS} ${HIKILIB})
 
 
 # enable CTest testing
-add_subdirectory(3rd_party/google-test)
+add_subdirectory(${PROJECT_SOURCE_DIR}/3rd_party/googletest)
 enable_testing()
-
+FILE(GLOB TEST_FILES ${PROJECT_SOURCE_DIR}/test/*.cpp)
+add_executable(fine_tine_test ${TEST_FILES})
+target_link_libraries(fine_tine_test PUBLIC gtest gtest_main ${HIKILIB} ${OpenCV_LIBS} stereocamera)
+add_test(NAME FineTineTest COMMAND fine_tine_test)
 MESSAGE(STATUS "INSTALL ${CAMERA_HEADER_FILES}")
 
 install(FILES ${CAMERA_HEADER_FILES}

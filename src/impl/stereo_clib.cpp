@@ -1,4 +1,5 @@
 #include "stereo_clib.h"
+#include "config.hpp"
 
 void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size boardSize, float squareSize, bool displayCorners , bool useCalibrated , bool showRectified )
 {
@@ -52,7 +53,8 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 				params.maxArea = 1e6;
 				params.blobColor = 255;
 				cv::Ptr<cv::FeatureDetector> blobDetector = cv::SimpleBlobDetector::create(params);
-				found = cv::findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
+				// found = cv::findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
+				found = cv::findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
 				//found = findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING);
 				/*found = findChessboardCorners(timg, boardSize, corners,
 					CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);*/
@@ -110,7 +112,8 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 	{
 		for (j = 0; j < boardSize.height; j++)
 			for (k = 0; k < boardSize.width; k++)
-				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize), float(j * squareSize), 0));
+				// objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize), float(j * squareSize), 0));
+				objectPoints[i].push_back(cv::Point3f(float(j * squareSize), float(k * squareSize), 0));
 	}
 
 	std::cout << "Running stereo calibration ...\n";
@@ -190,8 +193,10 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 				  cameraMatrix[1], distCoeffs[1],
 				  imageSize, R, T, R1, R2, P1, P2, Q,
 				  cv::CALIB_ZERO_DISPARITY, 1, imageSize, &validRoi[0], &validRoi[1]);
+	
+	auto const & config = Config::get_single();
 
-	fs.open("extrinsics.yml", cv::FileStorage::WRITE);
+	fs.open((config.config_path /  "extrinsics.yml").string(), cv::FileStorage::WRITE);
 	if (fs.isOpened())
 	{
 		fs << "R" << R << "T" << T << "R1" << R1 << "R2" << R2 << "P1" << P1 << "P2" << P2 << "Q" << Q;
@@ -289,11 +294,12 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 }
 
 void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::Mat &R,cv::Mat &T,cv::Mat &R1,cv::Mat &P1,cv::Mat &R2,cv::Mat &P2,cv::Mat & Q) {
-	cv::FileStorage fs("intrinsics.yml", cv::FileStorage::READ);
+	auto const &config = Config::get_single();
+	cv::FileStorage fs((config.config_path / "intrinsics.yml").string(), cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
 		printf("Failed to open file %s\n", "intrinsics.yml");
-		exit(1);
+		throw std::runtime_error("can not find intrinsics.yml");
 	}
 
 	fs["M1"] >> M1;
@@ -301,11 +307,11 @@ void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::M
 	fs["M2"] >> M2;
 	fs["D2"] >> D2;
 
-	fs.open("extrinsics.yml", cv::FileStorage::READ);
+	fs.open((config.config_path / "extrinsics.yml").string(), cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
 		printf("Failed to open file %s\n", "extrinsics.yml");
-		exit(1);
+		throw std::runtime_error("can not find extrinsics.yml");
 	}
 	fs["R"] >> R;
 	fs["T"] >> T;
@@ -317,12 +323,12 @@ void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::M
 }
 
 void LoadTransformParam(cv::Mat &affine_R,cv::Mat &affine_T){
-
-	cv::FileStorage fs("coodinate.yml", cv::FileStorage::READ);
+	auto const &config = Config::get_single();
+	cv::FileStorage fs((config.config_path / "coodinate.yml").string(), cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
-		printf("Failed to open file %s\n", "coodinate.ymll");
-		exit(1);
+		printf("Failed to open file %s\n", "coodinate.yml");
+		throw std::runtime_error("can not find coodinate.yml");
 	}
 	fs["R"] >> affine_R;
 	fs["T"] >> affine_T;
