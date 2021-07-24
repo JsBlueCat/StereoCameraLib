@@ -3,6 +3,8 @@
 #include<vector>
 #include <iostream>
 #include "debug.h"
+#include <opencv2/opencv.hpp>
+#include <opencv2/imgproc.hpp>
 
 typedef enum {
   Success = 0,
@@ -45,3 +47,14 @@ static std::vector<std::string> error_string{
   if(err!= ErrorInfo::Success) std::cout << error_string[err]  << std::endl; \
 } while(0);
 #endif
+
+
+auto show_img = [](cv::Mat &img){
+  cv::Mat cimg1;
+  double sf = 640. / MAX(img.rows, img.cols);
+  cv::resize(img, cimg1, cv::Size(), sf, sf, cv::INTER_LINEAR_EXACT);
+  cv::imshow("corners", cimg1);
+  char c = (char)cv::waitKey(500);
+  if (c == 27 || c == 'q' || c == 'Q') //Allow ESC to quit
+    exit(-1);
+};

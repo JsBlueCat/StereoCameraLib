@@ -117,7 +117,7 @@ StereoCamera::~StereoCamera() {
 }
 
 ErrorInfo StereoCamera::GrabImageDoubleCamera() {
-
+#ifndef CAMREA_DEBUG
   auto grab_img = [&](CMyCamera &cam, cv::Mat &out) -> ErrorInfo {
     MV_FRAME_OUT_INFO_EX stImageInfo = {0};
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
@@ -134,6 +134,7 @@ ErrorInfo StereoCamera::GrabImageDoubleCamera() {
   Assert_Error(err1);
   auto err2 = grab_img(right_camera, rightImg);
   Assert_Error(err2);
+#endif
   return ErrorInfo::Success;
 
   // auto grab1 = std::async(std::launch::async,grab_img,left_camera,leftImg);
@@ -143,10 +144,12 @@ ErrorInfo StereoCamera::GrabImageDoubleCamera() {
 }
 
 ErrorInfo StereoCamera::GrabClibImg(int i) {
+#ifndef CAMERA_DEBUG
   auto err = GrabImageDoubleCamera();
   Assert_Error(err);
   err = SaveGrabImg(i);
   Assert_Error(err);
+#endif
   return ErrorInfo::Success;
 }
 

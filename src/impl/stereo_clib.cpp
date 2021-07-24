@@ -27,66 +27,26 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 		for (k = 0; k < 2; k++)
 		{
 			const std::string &filename = imagelist[i * 2 + k];
-			cv::Mat img = cv::imread(filename, 0);
-			if (img.empty())
-				break;
-			if (imageSize == cv::Size())
-				imageSize = img.size();
-			else if (img.size() != imageSize)
-			{
-				std::cout << "The image " << filename << " has the size different from the first image size. Skipping the pair\n";
-				break;
-			}
-			bool found = false;
-			std::vector<cv::Point2f> &corners = imagePoints[k][j];
-			for (int scale = 1; scale <= maxScale; scale++)
-			{
-				cv::Mat timg;
-				if (scale == 1)
-					timg = img;
-				else
-					cv::resize(img, timg, cv::Size(), scale, scale, cv::INTER_LINEAR_EXACT);
+			auto match_points_func = [&](std::string path, std::vector<cv::Point2f> &corners) -> bool {
+				cv::Mat timg = cv::imread(path,0);
+				if(imageSize == cv::Size())
+					imageSize = timg.size();
+				// show_img(timg);
 				cv::SimpleBlobDetector::Params params;
-				params.filterByColor = true;
-				params.filterByArea = true;
-				params.minArea = 1e3;
-				params.maxArea = 1e6;
-				params.blobColor = 255;
+							params.filterByColor = true;
+							params.filterByArea = true;
+							params.minArea = 200;
+							params.maxArea = 1e5;
+							params.blobColor = 255;
 				cv::Ptr<cv::FeatureDetector> blobDetector = cv::SimpleBlobDetector::create(params);
-				// found = cv::findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
-				found = cv::findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
-				//found = findCirclesGrid(timg, boardSize, corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING);
-				/*found = findChessboardCorners(timg, boardSize, corners,
-					CALIB_CB_ADAPTIVE_THRESH | CALIB_CB_NORMALIZE_IMAGE);*/
-				if (found)
-				{
-					if (scale > 1)
-					{
-						cv::Mat cornersMat(corners);
-						cornersMat *= 1. / scale;
-					}
-					break;
-				}
-			}
-			if (displayCorners)
-			{
-				std::cout << filename << std::endl;
-				cv::Mat cimg, cimg1;
-				cv::cvtColor(img, cimg, cv::COLOR_GRAY2BGR);
-				drawChessboardCorners(cimg, boardSize, corners, found);
-				//drawChessboardCorners(cimg, boardSize, corners, found);
-				double sf = 640. / MAX(img.rows, img.cols);
-				cv::resize(cimg, cimg1, cv::Size(), sf, sf, cv::INTER_LINEAR_EXACT);
-				cv::imshow("corners", cimg1);
-				char c = (char)cv::waitKey(500);
-				if (c == 27 || c == 'q' || c == 'Q') //Allow ESC to quit
-					exit(-1);
-			}
-			else
-				putchar('.');
-			if (!found)
-				break;
-			cornerSubPix(img, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, 0.01));
+				auto found = cv::findCirclesGrid(timg, cv::Size(8,2), corners, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
+				if(!found){ return found;}
+				drawChessboardCorners(timg, cv::Size(8,2), corners, found);
+				show_img(timg);
+				cornerSubPix(timg, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, 0.01));
+				return true;
+			};
+			auto found = match_points_func(filename,std::move(imagePoints[k][j]));
 		}
 		if (k == 2)
 		{

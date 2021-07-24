@@ -12,15 +12,17 @@ FetchContent_Declare(
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(googletest)
 
+include(opencv)
+include(hikvision)
+include(finetune)
 
 add_executable(FineTuneTest ${TEST_SRCS})
 set_target_properties(FineTuneTest PROPERTIES 
 RUNTIME_OUTPUT_DIRECTORY ${PROJECT_BINARY_DIR}
 )
-target_link_libraries(FineTuneTest PUBLIC gtest_main gtest)
+target_link_libraries(FineTuneTest PUBLIC gtest_main gtest StereoCamera ${OpenCV_LIBS} ${HIKVISION_LIB})
+target_include_directories(FineTuneTest PUBLIC ${HIKVISION_INCLUDE_DIR} ${STEREO_CAMERA_INCLUDE_PATH} ${OpenCV_INCLUDE_DIRS})
 
 
 include(GoogleTest)
-gtest_discover_tests(FineTuneTest
-    WORKING_DIRECTORY ${TEST_DIR}
-)
+gtest_discover_tests(FineTuneTest)
