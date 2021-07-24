@@ -1,5 +1,6 @@
 #include "hikvision_double_camera.h"
-#include "config.hpp"
+#include "config.h"
+#include "stereo_clib.h"
 #include <filesystem>
 #include <future>
 #include <iostream>
@@ -7,36 +8,38 @@
 #include <string>
 #include <vector>
 
-StereoCamera *StereoCamera::instance{nullptr};
+std::shared_ptr<StereoCamera> StereoCamera::instance{nullptr};
+ErrorInfo StereoCamera::cam_st{ErrorInfo::Success};
 
-StereoCamera *StereoCamera::GetInstance() {
+std::shared_ptr<StereoCamera> StereoCamera::GetInstance() {
   std::cout << "get instance" << std::endl;
   if (instance == nullptr) {
-    instance = new StereoCamera();
+    instance.reset(new StereoCamera());
     return instance;
   } else {
     return instance;
   }
 }
 
-bool StereoCamera::QueryCamera(int id) {
+ErrorInfo StereoCamera::QueryCamera(int id) {
   switch (id) {
   case /* constant-expression */ 1:
-    return left_camera.m_hDevHandle != NULL;
+    return left_camera.m_hDevHandle != NULL ? ErrorInfo::Success : ErrorInfo::CamNotConnected;
     break;
 
   case /* constant-expression */ 2:
-    return right_camera.m_hDevHandle != NULL;
+    return right_camera.m_hDevHandle != NULL ? ErrorInfo::Success : ErrorInfo::CamNotConnected;
     break;
 
   default:
+    return ErrorInfo::Unknown;
     break;
   }
-  return false;
 }
 
 StereoCamera::StereoCamera() {
   std::cout << "find the connected device" << std::endl;
+  cam_st = ErrorInfo::CamNotFound;
   memset(&stDeviceList, 0, sizeof(MV_CC_DEVICE_INFO_LIST));
   auto times = 1;
   do {
@@ -83,11 +86,14 @@ StereoCamera::StereoCamera() {
   } while (times++ < 20);
   if (times > 20) {
     std::cerr << "fail with connect 20 times , abort..." << std::endl;
-    throw std::runtime_error("Can't connect camera");
   } else {
-    left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
-    right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
-
+    cam_st = ErrorInfo::Success;
+    int leftStatus = left_camera.Open(&camera_ip_map[LEFT_CAMERA_IP4]);
+    int rightStatus = right_camera.Open(&camera_ip_map[RIGHT_CAMERA_IP4]);
+    if (leftStatus != MV_OK || rightStatus !=MV_OK){
+      cam_st = ErrorInfo::CamNotConnected;
+      return;
+    }
     auto cam_init = [](CMyCamera &cam) {
       auto nPacketSize = cam.GetOptimalPacketSize();
       cam.SetIntValue("GevSCPSPacketSize", nPacketSize);
@@ -110,9 +116,9 @@ StereoCamera::~StereoCamera() {
   right_camera.Close();
 }
 
-void StereoCamera::GrabImageDoubleCamera() {
+ErrorInfo StereoCamera::GrabImageDoubleCamera() {
 
-  auto grab_img = [&](CMyCamera &cam, cv::Mat &out) {
+  auto grab_img = [&](CMyCamera &cam, cv::Mat &out) -> ErrorInfo {
     MV_FRAME_OUT_INFO_EX stImageInfo = {0};
     memset(&stImageInfo, 0, sizeof(MV_FRAME_OUT_INFO_EX));
     unsigned int pnDatalen = 0;
@@ -120,15 +126,15 @@ void StereoCamera::GrabImageDoubleCamera() {
         cam.GetOneFrameTimeout(cam.m_pBufForDriver, &pnDatalen,
                                cam.m_nBufSizeForDriver, &stImageInfo, 200);
     if (result != MV_OK)
-      throw std::runtime_error("Camera error: " + std::to_string(result));
+        return ErrorInfo::Cp3NotFound;
     Convert2Mat(&stImageInfo, cam.m_pBufForDriver, out);
+    return ErrorInfo::Success;
   };
-  try {
-    grab_img(left_camera, leftImg);
-    grab_img(right_camera, rightImg);
-  } catch (const std::exception &exp) {
-    std::cout << exp.what() << ", please retry" << std::endl;
-  }
+  auto err1 = grab_img(left_camera, leftImg);
+  Assert_Error(err1);
+  auto err2 = grab_img(right_camera, rightImg);
+  Assert_Error(err2);
+  return ErrorInfo::Success;
 
   // auto grab1 = std::async(std::launch::async,grab_img,left_camera,leftImg);
   // auto grab2 = std::async(std::launch::async,grab_img,right_camera,rightImg);
@@ -136,21 +142,25 @@ void StereoCamera::GrabImageDoubleCamera() {
   // grab2.wait();
 }
 
-void StereoCamera::GrabClibImg(int i) {
-  GrabImageDoubleCamera();
-  SaveGrabImg(i);
+ErrorInfo StereoCamera::GrabClibImg(int i) {
+  auto err = GrabImageDoubleCamera();
+  Assert_Error(err);
+  err = SaveGrabImg(i);
+  Assert_Error(err);
+  return ErrorInfo::Success;
 }
 
-void StereoCamera::SaveGrabImg(int i) {
+ErrorInfo StereoCamera::SaveGrabImg(int i) {
   auto const &config = Config::get_single();
   cv::imwrite((config.images_path / (std::to_string(i) + "_left.bmp")).string(),
               leftImg);
   cv::imwrite(
       (config.images_path / (std::to_string(i) + "_right.bmp")).string(),
       rightImg);
+  return ErrorInfo::Success;
 }
 
-void StereoCamera::RemapImg() {
+ErrorInfo StereoCamera::RemapImg() {
   cv::Mat map11, map12, map21, map22;
   cv::Mat img1r, img2r;
   initUndistortRectifyMap(M1, D1, R1, P1, leftImg.size(), CV_16SC2, map11,
@@ -160,9 +170,10 @@ void StereoCamera::RemapImg() {
 
   remap(leftImg, img1r, map11, map12, cv::INTER_LINEAR);
   remap(rightImg, img2r, map21, map22, cv::INTER_LINEAR);
+  return ErrorInfo::Success;
 }
 
-void StereoCamera::SaveTestImg(int i) {
+ErrorInfo StereoCamera::SaveTestImg(int i) {
   auto const &config = Config::get_single();
   auto save_image = [](std::filesystem::path path, std::string &filename,
                        cv::Mat &image) {
@@ -200,9 +211,10 @@ void StereoCamera::SaveTestImg(int i) {
                right);
   };
   save_split_img();
+  return ErrorInfo::Success;
 }
 
-void StereoCamera::ClibCam() {
+ErrorInfo StereoCamera::ClibCam() {
   auto isClibFile = [](std::filesystem::path path) -> bool {
     std::string pattern{"\\d+_\\w*.bmp"};
     std::regex re(pattern);
@@ -216,16 +228,17 @@ void StereoCamera::ClibCam() {
       image_list.push_back(it.path().string());
     }
   }
-  StereoCalibInerAndExter(image_list, config.boardSize, config.squareSize,
+  return StereoCalibInerAndExter(image_list, config.boardSize, config.squareSize,
                           false, true, true);
+                      
 }
 
-void StereoCamera::LoadParam() {
-  LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
+ErrorInfo StereoCamera::LoadParam() {
+  return LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
   // LoadTransformParam(affine_R, affine_T);
 }
 
-void StereoCamera::MatchSingleFrame(int i, std::vector<cv::Mat> &results) {
+ErrorInfo StereoCamera::MatchSingleFrame(int i, std::vector<cv::Mat> &results) {
   auto const &config = Config::get_single();
   auto left_left = cv::Rect(cv::Point(1715, 0), cv::Point(2135, leftImg.rows));
   auto left_middle =
@@ -239,44 +252,44 @@ void StereoCamera::MatchSingleFrame(int i, std::vector<cv::Mat> &results) {
   std::vector<std::vector<cv::Point2f>> left_points, right_points;
   auto split_img_and_find_point =
       [&](cv::Rect r1, cv::Rect r2, cv::Rect r3, cv::Mat &img,
-          std::vector<std::vector<cv::Point2f>> &out) -> bool {
+          std::vector<std::vector<cv::Point2f>> &out) -> ErrorInfo{
     cv::Mat left, middle, right;
     SplitImg(img, r1, r2, r3, left, middle, right);
-    try {
-      auto corase_aera = CoraselyFindCp3(middle);
-      auto save_clip = [&]() {
-        int count = 0;
-        for (auto area : corase_aera) {
-          cv::Mat tmp = middle(area);
-          cv::imwrite((config.debug_images /
-                       ("current" + std::to_string(++count) + ".bmp"))
-                          .string(),
-                      tmp);
-        }
-      };
-      save_clip();
-      std::vector<std::vector<cv::Point2f>> points(corase_aera.size());
-      MutiFindCp3(middle, corase_aera, points);
-      MutiFixROIList(points, corase_aera, r2.tl());
-      out = points;
-      return true;
-    } catch (std::exception &exp) {
-      std::cout << exp.what() << std::endl;
-      return false;
+    auto corase_area = CoraselyFindCp3(middle);
+    if(corase_area.second != ErrorInfo::Success) {
+      return corase_area.second;
     }
+    auto save_clip = [&]() {
+      int count = 0;
+      for (auto area : corase_area.first) {
+        cv::Mat tmp = middle(area);
+        cv::imwrite((config.debug_images /
+                     ("current" + std::to_string(++count) + ".bmp"))
+                        .string(),
+                    tmp);
+      }
+    };
+    save_clip();
+    std::vector<std::vector<cv::Point2f>> points(corase_area.first.size());
+    MutiFindCp3(middle, corase_area.first, points);
+    MutiFixROIList(points, corase_area.first, r2.tl());
+    out = points;
+    return ErrorInfo::Success;
   };
   auto res_left = split_img_and_find_point(left_left, left_middle, left_right,
                                            leftImg, left_points);
   auto res_right = split_img_and_find_point(
       right_left, right_middle, right_right, rightImg, right_points);
-  if (res_left && res_right) {
+  if (res_left == ErrorInfo::Success && res_right == ErrorInfo::Success) {
     MutiMatchCp3(left_points, right_points, Q, results);
-  }else{
+  } else {
     std::cout << "Match MutiCp3 Error" << std::endl;
+    return ErrorInfo::Cp3NotFound;
   }
   for (auto &result : results) {
     std::cout << result << std::endl;
   }
+  return ErrorInfo::Success;
 }
 
 // convert data stream in Mat format

@@ -70,3 +70,5 @@ package-lock.json
 package/lib
 package/include
 *.log
+install/
+bin/

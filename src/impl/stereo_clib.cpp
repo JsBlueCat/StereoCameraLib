@@ -1,12 +1,12 @@
 #include "stereo_clib.h"
-#include "config.hpp"
+#include "config.h"
 
-void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size boardSize, float squareSize, bool displayCorners , bool useCalibrated , bool showRectified )
+ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size boardSize, float squareSize, bool displayCorners , bool useCalibrated , bool showRectified )
 {
 	if (imagelist.size() % 2 != 0)
 	{
 		std::cout << "Error: the image list contains odd (non-even) number of elements\n";
-		return;
+		return ErrorInfo::ImageNotPaired;
 	}
 
 	const int maxScale = 2;
@@ -100,7 +100,7 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 	if (nimages < 2)
 	{
 		std::cout << "Error: too little pairs to run the calibration\n";
-		return;
+		return ErrorInfo::NotSufficientImage;
 	}
 
 	imagePoints[0].resize(nimages);
@@ -176,8 +176,9 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 	}
 	std::cout << "average epipolar err = " << err / npoints << std::endl;
 
+	auto const & config = Config::get_single();
 	// save intrinsic parameters
-	cv::FileStorage fs("intrinsics.yml", cv::FileStorage::WRITE);
+	cv::FileStorage fs((config.config_path /  "intrinsics.yml").string(), cv::FileStorage::WRITE);
 	if (fs.isOpened())
 	{
 		fs << "M1" << cameraMatrix[0] << "D1" << distCoeffs[0] << "M2" << cameraMatrix[1] << "D2" << distCoeffs[1];
@@ -194,7 +195,6 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 				  imageSize, R, T, R1, R2, P1, P2, Q,
 				  cv::CALIB_ZERO_DISPARITY, 1, imageSize, &validRoi[0], &validRoi[1]);
 	
-	auto const & config = Config::get_single();
 
 	fs.open((config.config_path /  "extrinsics.yml").string(), cv::FileStorage::WRITE);
 	if (fs.isOpened())
@@ -211,7 +211,7 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 
 	// COMPUTE AND DISPLAY RECTIFICATION
 	if (!showRectified)
-		return;
+		return ErrorInfo::Success;
 
 	cv::Mat rmap[2][2];
 	// IF BY CALIBRATED (BOUGUET'S METHOD)
@@ -291,15 +291,16 @@ void StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv::Size
 		if (c == 27 || c == 'q' || c == 'Q')
 			break;
 	}
+	return ErrorInfo::Success;
 }
 
-void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::Mat &R,cv::Mat &T,cv::Mat &R1,cv::Mat &P1,cv::Mat &R2,cv::Mat &P2,cv::Mat & Q) {
+ErrorInfo LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::Mat &R,cv::Mat &T,cv::Mat &R1,cv::Mat &P1,cv::Mat &R2,cv::Mat &P2,cv::Mat & Q) {
 	auto const &config = Config::get_single();
 	cv::FileStorage fs((config.config_path / "intrinsics.yml").string(), cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
 		printf("Failed to open file %s\n", "intrinsics.yml");
-		throw std::runtime_error("can not find intrinsics.yml");
+		return ErrorInfo::ConfigNotFound;
 	}
 
 	fs["M1"] >> M1;
@@ -311,7 +312,7 @@ void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::M
 	if (!fs.isOpened())
 	{
 		printf("Failed to open file %s\n", "extrinsics.yml");
-		throw std::runtime_error("can not find extrinsics.yml");
+		return ErrorInfo::ConfigNotFound;
 	}
 	fs["R"] >> R;
 	fs["T"] >> T;
@@ -320,18 +321,20 @@ void LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,cv::M
 	fs["R2"] >> R2;
 	fs["P2"] >> P2;
 	fs["Q"] >> Q;
+	return ErrorInfo::Success;
 }
 
-void LoadTransformParam(cv::Mat &affine_R,cv::Mat &affine_T){
+ErrorInfo LoadTransformParam(cv::Mat &affine_R,cv::Mat &affine_T){
 	auto const &config = Config::get_single();
 	cv::FileStorage fs((config.config_path / "coodinate.yml").string(), cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
 		printf("Failed to open file %s\n", "coodinate.yml");
-		throw std::runtime_error("can not find coodinate.yml");
+		return ErrorInfo::ConfigNotFound;
 	}
 	fs["R"] >> affine_R;
 	fs["T"] >> affine_T;
+	return ErrorInfo::Success;
 }
 
 std::future<bool> FindCp3PointFromOneClipAsync(cv::Mat& img, std::vector<cv::Point2f> &target_point){
@@ -361,8 +364,10 @@ void SplitMutliCp3Img(cv::Mat &img_middle, std::vector<cv::Rect> &areas, std::ve
 	}
 }
 
-void MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Point2f> &target_r_points, cv::Mat &Q, cv::Mat &avg) {
-	assert(target_l_points.size() == target_r_points.size());
+ErrorInfo MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Point2f> &target_r_points, cv::Mat &Q, cv::Mat &avg) {
+	if(target_l_points.size() != target_r_points.size()){
+		return ErrorInfo::Cp3PointNotEqual;
+	}
 	avg = cv::Mat::zeros(4, 1, CV_64FC1);
 	for (int i = 0; i < target_l_points.size(); i++) {
 		double distance_l = _ABS(target_r_points[i].x - target_l_points[i].x);//_ABS(target_r_points[i].x - target_l_points[i].x);
@@ -380,6 +385,7 @@ void MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Point2f
 	}
 	avg /= target_l_points.size();
 	avg.at<double>(1, 0) *= -1;
+	return ErrorInfo::Success;
 }
 
 std::future<bool> DetectCyclesFromWholeImgAsync(cv::Mat &middle, std::vector<cv::Vec3f> &circles){
@@ -399,13 +405,15 @@ std::future<bool> DetectCyclesFromWholeImgAsync(cv::Mat &middle, std::vector<cv:
 }
 
 // 从中间图像中获取canny结果,并将图像等分并返回 所需截图区域
-std::vector<cv::Rect> CoraselyFindCp3(cv::Mat& middle){
+std::pair<std::vector<cv::Rect>,ErrorInfo> CoraselyFindCp3(cv::Mat& middle){
 	std::vector<cv::Rect> result;
 	std::vector<cv::Vec3f> points;
 	auto point_list = DetectCyclesFromWholeImgAsync(middle, points);
 	point_list.wait();
 	// 必须找到4个坐标点
-	assert((points.size() % POINTS_ON_EACH_CP3) == 0);
+	if(points.size() % POINTS_ON_EACH_CP3 != 0 ){
+		return std::make_pair<std::vector<cv::Rect>,ErrorInfo>({},ErrorInfo::Cp3PointFoundNotPair);
+	}
 	auto num_of_cp3 = points.size() /  POINTS_ON_EACH_CP3;
 	std::sort(points.begin(),points.end(),[=](const cv::Vec3f & vec1, const cv::Vec3f & vec2){
 		return vec1[0] < vec2[0];
@@ -424,10 +432,10 @@ std::vector<cv::Rect> CoraselyFindCp3(cv::Mat& middle){
 		auto right_bottom_point = cv::Point( int(max_x + width),int(max_y + height));
 		result.push_back(cv::Rect(left_top_point,right_bottom_point));
 	}
-	return result;
+	return std::make_pair<std::vector<cv::Rect>,ErrorInfo>(std::move(result),ErrorInfo::Success);
 }
 
-void MutiFindCp3(cv::Mat &middle_img,std::vector<cv::Rect> &area,std::vector<std::vector<cv::Point2f>> &target_point_list){
+ErrorInfo MutiFindCp3(cv::Mat &middle_img,std::vector<cv::Rect> &area,std::vector<std::vector<cv::Point2f>> &target_point_list){
 	for(auto &list:target_point_list){
 		list.clear();
 	}
@@ -442,6 +450,7 @@ void MutiFindCp3(cv::Mat &middle_img,std::vector<cv::Rect> &area,std::vector<std
 		task.wait(); 
 		auto flag = task.get();
 	}
+	return ErrorInfo::Success;
 }
 
 void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vector<cv::Rect>& rect_list , cv::Point2f roi) {
@@ -452,8 +461,10 @@ void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vec
 	}
 }
 
-void MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points,std::vector<std::vector<cv::Point2f>> &right_target_points,cv::Mat &Q, std::vector<cv::Mat> &out){
-	assert(left_target_points.size() == right_target_points.size());
+ErrorInfo MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points,std::vector<std::vector<cv::Point2f>> &right_target_points,cv::Mat &Q, std::vector<cv::Mat> &out){
+	if(left_target_points.size() != right_target_points.size()){
+		return ErrorInfo::Cp3PointNotEqual;
+	}
 	out.clear();
 	std::vector<cv::Mat> results;
 	for(int i = 0; i < left_target_points.size() ;i ++){
@@ -462,6 +473,7 @@ void MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points,std:
 		results.push_back(tmp);
 	}
 	out = results;
+	return ErrorInfo::Success;
 }
 
 // void FixROI(std::vector<std::vector<cv::Point2f>> &corners, cv::Point2f &roi) {
