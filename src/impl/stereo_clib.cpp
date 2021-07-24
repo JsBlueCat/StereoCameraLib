@@ -43,7 +43,7 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 				if(!found){ return found;}
 				drawChessboardCorners(timg, cv::Size(8,2), corners, found);
 				show_img(timg);
-				cornerSubPix(timg, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 30, 0.01));
+				cornerSubPix(timg, corners, cv::Size(1,1), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 800000, 1e-10));
 				return true;
 			};
 			auto found = match_points_func(filename,std::move(imagePoints[k][j]));
@@ -343,7 +343,7 @@ ErrorInfo MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Po
 		result.at<double>(3, 0) = distance_l;
 		avg += result;
 	}
-	avg /= target_l_points.size();
+	avg /= static_cast<double>(target_l_points.size());
 	avg.at<double>(1, 0) *= -1;
 	return ErrorInfo::Success;
 }
