@@ -1,3 +1,4 @@
+#define NODE_API_SWALLOW_UNTHROWABLE_EXCEPTIONS
 #include "config.h"
 #include "hikvision_double_camera.h"
 #include <exception>
@@ -5,6 +6,8 @@
 #include <iostream>
 #include <sstream>
 #include <vector>
+
+
 
 int main() {
   auto const &config = Config::get_single("D://Debug", cv::Size(8, 2), 30);

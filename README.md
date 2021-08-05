@@ -26,3 +26,8 @@ ctest all --vebose
 
 ## macos 
 尚未开发
+
+## 常见问题 
+
+0x000035 需要配置cmake路径，不然 vs的cmake nijia build 冲突。
+需要安装 .net framework 最新

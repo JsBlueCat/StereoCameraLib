@@ -5,6 +5,7 @@
 #include <opencv2/imgproc.hpp>
 #include "config.h"
 #include "hikvision_double_camera.h"
+#include <ctime>
 
 TEST(StereoCameraLib, TEST_Hello){
     std::cout << "Hello, from StereoCamearLib!\n";
@@ -16,6 +17,23 @@ TEST(StereoCameraLib, TEST_CXX17){
 
 TEST(StereoCameraLib, TEST_CV){
     cv::Mat test;
+}
+
+TEST(StereoCameraLib, TEST_TIME){
+	time_t curr_time;
+	curr_time = time(NULL);
+    struct tm tm_local;
+	localtime_s(&tm_local,&curr_time);
+    std::string day = std::to_string(tm_local.tm_year + 1900) + "-"
+    + std::to_string(tm_local.tm_mon+1) + "-" + std::to_string(tm_local.tm_mday);
+
+    std::string time = std::to_string(tm_local.tm_hour) + "_"
+    + std::to_string(tm_local.tm_min) + "_" + std::to_string(tm_local.tm_sec);
+
+    auto const &config = Config::get_single();
+    cv::Mat Test_img = cv::Mat::zeros(224,224,CV_32F);
+    config.save_img((config.debug_images/day).string(),time+"_left.bmp",Test_img);
+    config.save_img((config.debug_images/day).string(),time+"_right.bmp",Test_img);
 }
 
 TEST(StereoCameraLib, TEST_STEREO_CAMERA){

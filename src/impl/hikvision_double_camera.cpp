@@ -7,6 +7,7 @@
 #include <regex>
 #include <string>
 #include <vector>
+#include <ctime>
 
 std::shared_ptr<StereoCamera> StereoCamera::instance{nullptr};
 ErrorInfo StereoCamera::cam_st{ErrorInfo::Success};
@@ -135,6 +136,20 @@ ErrorInfo StereoCamera::GrabImageDoubleCamera() {
   auto err2 = grab_img(right_camera, rightImg);
   Assert_Error(err2);
 #endif
+  time_t curr_time;
+	curr_time = time(NULL);
+    struct tm tm_local;
+	localtime_s(&tm_local,&curr_time);
+  std::string day = std::to_string(tm_local.tm_year + 1900) + "-"
+    + std::to_string(tm_local.tm_mon+1) + "-" + std::to_string(tm_local.tm_mday);
+
+  std::string time = std::to_string(tm_local.tm_hour) + "_"
+    + std::to_string(tm_local.tm_min) + "_" + std::to_string(tm_local.tm_sec);
+
+  auto const &config = Config::get_single();
+  config.save_img((config.debug_images/day).string(),time+"_left.bmp",leftImg);
+  config.save_img((config.debug_images/day).string(),time+"_right.bmp",rightImg);
+
   return ErrorInfo::Success;
 
   // auto grab1 = std::async(std::launch::async,grab_img,left_camera,leftImg);

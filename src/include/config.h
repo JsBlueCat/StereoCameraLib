@@ -43,4 +43,19 @@ private:
     create_and_permiss(images_path);
     create_and_permiss(debug_images);
   }
+public:
+  void save_img(std::string path, std::string name, cv::Mat &img) const {
+    auto create_and_permiss = [](std::filesystem::path path) {
+        std::filesystem::create_directories(path);
+        std::filesystem::permissions(path,
+                                    std ::filesystem::perms::owner_all |
+                                        std::filesystem::perms::group_all,
+                                    std::filesystem::perm_options::add);
+    };
+    std::filesystem::path fs(path);
+    create_and_permiss(fs);
+    fs/= name;
+    std::cout <<fs.string() << std::endl;
+    cv::imwrite(fs.string(),img);
+  }
 };
