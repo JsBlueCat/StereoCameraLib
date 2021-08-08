@@ -42,8 +42,10 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 				auto found = cv::findCirclesGrid(timg, cv::Size(8,2), corners, cv::CALIB_CB_SYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
 				if(!found){ return found;}
 				drawChessboardCorners(timg, cv::Size(8,2), corners, found);
+				std::cout << "before subpix" <<cv::Mat(corners);
 				show_img(timg);
-				cornerSubPix(timg, corners, cv::Size(1,1), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 800000, 1e-10));
+				cornerSubPix(timg, corners, cv::Size(1,1), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 80000, 1e-4));
+				std::cout << "after subpix" <<cv::Mat(corners);
 				return true;
 			};
 			auto found = match_points_func(filename,std::move(imagePoints[k][j]));
@@ -78,31 +80,32 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 
 	std::cout << "Running stereo calibration ...\n";
 
-	cv::Mat cameraMatrix[2], distCoeffs[2], r, t;
-	calibrateCamera(objectPoints, imagePoints[0], imageSize, cameraMatrix[0], distCoeffs[0], r, t);
-	calibrateCamera(objectPoints, imagePoints[1], imageSize, cameraMatrix[1], distCoeffs[1], r, t);
+	std::vector<cv::Mat> cameraMatrix(2,cv::Mat::eye(3, 3, CV_64F));
+	std::vector<cv::Mat> distCoeffs(2,cv::Mat::zeros(5, 1, CV_64F));
+	double aspectRatio = (double)imageSize.width / (double)imageSize.height;
+	// cv::Mat cameraMatrix[2], distCoeffs[2], r, t;
+	for(int i =0;i<2;i++){
+		cv::Mat r,t;
+		cameraMatrix[i].at<double>(0,0) = aspectRatio;
+		std::cout << cameraMatrix[i];
+		double err = calibrateCamera(objectPoints, imagePoints[i], imageSize, cameraMatrix[i],
+                        distCoeffs[i], r, t,
+                        cv::CALIB_FIX_ASPECT_RATIO|
+						cv::CALIB_ZERO_TANGENT_DIST|
+						cv::CALIB_FIX_PRINCIPAL_POINT|
+						cv::CALIB_FIX_K3/*|CALIB_FIX_K4|CALIB_FIX_K5|CALIB_FIX_K6*/);
+	}
+	// calibrateCamera(objectPoints, imagePoints[0], imageSize, cameraMatrix[0], distCoeffs[0], r, t);
+	// calibrateCamera(objectPoints, imagePoints[1], imageSize, cameraMatrix[1], distCoeffs[1], r, t);
 	std::cout << cameraMatrix[0];
 	std::cout << cameraMatrix[1];
-
-	/*cameraMatrix[1] = initCameraMatrix2D(objectPoints, imagePoints[1], imageSize, 0);
-	std::cout << cameraMatrix[1];*/
-	//cameraMatrix[1] = cameraMatrix[0];
-	//distCoeffs[1] = distCoeffs[0];
 	cv::Mat R, T, E, F;
 
 	double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
 								 cameraMatrix[0], distCoeffs[0],
 								 cameraMatrix[1], distCoeffs[1],
 								 imageSize, R, T, E, F,
-								 cv::CALIB_FIX_ASPECT_RATIO +
-									 cv::CALIB_ZERO_TANGENT_DIST +
-									 cv::CALIB_FIX_PRINCIPAL_POINT +
-									 cv::CALIB_USE_INTRINSIC_GUESS +
-									 cv::CALIB_SAME_FOCAL_LENGTH +
-									 cv::CALIB_RATIONAL_MODEL +
-									 cv::CALIB_FIX_K3 + 
-                                     cv::CALIB_FIX_K4 +
-                                     cv::CALIB_FIX_K5,
+								 cv::CALIB_FIX_INTRINSIC,
 								 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 100, 1e-5));
 	std::cout << "done with RMS error=" << rms << std::endl;
 
