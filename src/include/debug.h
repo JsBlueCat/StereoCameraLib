@@ -54,7 +54,7 @@ auto show_img = [](cv::Mat &img){
   double sf = 640. / MAX(img.rows, img.cols);
   cv::resize(img, cimg1, cv::Size(), sf, sf, cv::INTER_LINEAR_EXACT);
   cv::imshow("corners", cimg1);
-  char c = (char)cv::waitKey(500);
+  char c = (char)cv::waitKey(100);
   if (c == 27 || c == 'q' || c == 'Q') //Allow ESC to quit
     exit(-1);
 };

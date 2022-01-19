@@ -13,8 +13,8 @@ public:
   float squareSize;
   static Config &
   get_single(std::filesystem::path root = std::filesystem::path("D:\\debug"),
-             const cv::Size &boardSize = cv::Size(8, 2),
-             float squareSize = 30.8) {
+             const cv::Size &boardSize = cv::Size(3, 9),
+             float squareSize = 100) {
     static Config single(root, boardSize, squareSize);
     return single;
   }
