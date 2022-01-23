@@ -10,7 +10,7 @@
 
 
 int main() {
-  auto const &config = Config::get_single("D://Debug", cv::Size(3, 9), 100);
+  auto const &config = Config::get_single("D://Debug", cv::Size(3, 9), 50);
   auto Fine_Tune_Device = new StereoCamera();
   Check_Api(Fine_Tune_Device->get_camera_error());
   Check_Api(Fine_Tune_Device->LoadParam());

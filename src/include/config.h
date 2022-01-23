@@ -14,7 +14,7 @@ public:
   static Config &
   get_single(std::filesystem::path root = std::filesystem::path("D:\\debug"),
              const cv::Size &boardSize = cv::Size(3, 9),
-             float squareSize = 100) {
+             float squareSize = 50.0) {
     static Config single(root, boardSize, squareSize);
     return single;
   }

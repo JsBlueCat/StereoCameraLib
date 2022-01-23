@@ -76,40 +76,56 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 	{
 		for (j = 0; j < boardSize.height; j++)
 			for (k = 0; k < boardSize.width; k++)
-				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize), float(j * squareSize), 0));
+				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize) + squareSize / 2, float(j * squareSize) + squareSize / 2, 0));
 				// objectPoints[i].push_back(cv::Point3f(float(j * squareSize), float(k * squareSize), 0));
 	}
 
 	std::cout << "Running stereo calibration ...\n";
+	std::vector<cv::Mat> cameraMatrix = { cv::Mat::eye(3, 3, CV_64F),cv::Mat::eye(3, 3, CV_64F) };
+	std::vector<cv::Mat> distCoeffs = { cv::Mat::zeros(14, 1, CV_64F),cv::Mat::zeros(14, 1, CV_64F) };
+	cameraMatrix[0].at<double>(0, 0) = 3023.622047244094;
+	cameraMatrix[0].at<double>(0, 2) = 2736;
+	cameraMatrix[0].at<double>(1, 1) = 4000;
+	cameraMatrix[0].at<double>(1, 2) = 1824;
+	cameraMatrix[1] = cameraMatrix[0];
+	{ // method 1 find the point with clibrate two camera
+		double aspectRatio = (double)12.7/9.6;
+		// cv::Mat cameraMatrix[2], distCoeffs[2], r, t;
+		for (int i = 0; i < 2; i++) {
+			cv::Mat r, t;
+			double err = calibrateCamera(objectPoints, imagePoints[i], imageSize, cameraMatrix[i],
+				distCoeffs[i], r, t,
+				cv::CALIB_USE_INTRINSIC_GUESS +
+				CALIB_RATIONAL_MODEL +
+				CALIB_THIN_PRISM_MODEL +
+				CALIB_TILTED_MODEL
+			/*CALIB_FIX_K3|CALIB_FIX_K4|CALIB_FIX_K5|CALIB_FIX_K6*/);
+		}
 
-	// std::vector<cv::Mat> cameraMatrix(2,cv::Mat::eye(3, 3, CV_64F));
-	// std::vector<cv::Mat> distCoeffs(2,cv::Mat::zeros(5, 1, CV_64F));
-	double aspectRatio = (double)imageSize.width / (double)imageSize.height;
-	cv::Mat cameraMatrix[2], distCoeffs[2], r, t;
-	// for(int i =0;i<2;i++){
-	// cv::Mat r,t;
-	// 	cameraMatrix[i].at<double>(0,0) = aspectRatio;
-	// 	std::cout << cameraMatrix[i];
-	// 	double err = calibrateCamera(objectPoints, imagePoints[i], imageSize, cameraMatrix[i],
-    //                     distCoeffs[i], r, t,
-    //                     cv::CALIB_FIX_ASPECT_RATIO|
-	// 					cv::CALIB_ZERO_TANGENT_DIST|
-	// 					cv::CALIB_FIX_PRINCIPAL_POINT|
-	// 					cv::CALIB_FIX_K3/*|CALIB_FIX_K4|CALIB_FIX_K5|CALIB_FIX_K6*/);
-	// }
-	calibrateCamera(objectPoints, imagePoints[0], imageSize, cameraMatrix[0], distCoeffs[0], r, t);
-	calibrateCamera(objectPoints, imagePoints[1], imageSize, cameraMatrix[1], distCoeffs[1], r, t);
-	// std::cout << cameraMatrix[0];
-	// std::cout << cameraMatrix[1];
-	cv::Mat R, T, E, F;
+	}
+	std::cout << cameraMatrix[0];
+	std::cout << cameraMatrix[1];
 
+
+	cv::Mat R, T, E, F ,perViewErrors;
+
+	R = cv::Mat::eye(3, 3, CV_64F);
+	T = cv::Mat::zeros(3, 1, CV_64F);
+	T.at<double>(0, 0) = -350;
 	double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
 								 cameraMatrix[0], distCoeffs[0],
 								 cameraMatrix[1], distCoeffs[1],
-								 imageSize, R, T, E, F,
-								 cv::CALIB_FIX_INTRINSIC,
+								 imageSize, R, T, E, F, perViewErrors,
+								CALIB_FIX_INTRINSIC +
+								CALIB_USE_EXTRINSIC_GUESS +
+								CALIB_RATIONAL_MODEL +
+								CALIB_THIN_PRISM_MODEL + 
+								CALIB_TILTED_MODEL,
 								 cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10000, 1e-5));
 	std::cout << "done with RMS error=" << rms << std::endl;
+	std::cout << cameraMatrix[0];
+	std::cout << cameraMatrix[1];
+	std::cout << R << T;
 
 	// CALIBRATION QUALITY CHECK
 	// because the output fundamental matrix implicitly
@@ -158,7 +174,7 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 	cv::stereoRectify(cameraMatrix[0], distCoeffs[0],
 				  cameraMatrix[1], distCoeffs[1],
 				  imageSize, R, T, R1, R2, P1, P2, Q,
-				  cv::CALIB_ZERO_DISPARITY, 1, imageSize, &validRoi[0], &validRoi[1]);
+				  cv::CALIB_ZERO_DISPARITY, 0, imageSize, &validRoi[0], &validRoi[1]);
 	
 
 	fs.open((config.config_path /  "extrinsics.yml").string(), cv::FileStorage::WRITE);

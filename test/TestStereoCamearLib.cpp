@@ -54,16 +54,16 @@ TEST(StereoCameraLib, TEST_FOUND){
                     params.maxArea = 1e5;
                     params.blobColor = 255;
         cv::Ptr<cv::FeatureDetector> blobDetector = cv::SimpleBlobDetector::create(params);
-        std::vector<cv::Point2f> corners(16);
-        auto found = cv::findCirclesGrid(timg, cv::Size(11,4), corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
+        std::vector<cv::Point2f> corners(27);
+        auto found = cv::findCirclesGrid(timg, cv::Size(3,9), corners, cv::CALIB_CB_ASYMMETRIC_GRID | cv::CALIB_CB_CLUSTERING, blobDetector);
         ASSERT_EQ(found,true);
-        drawChessboardCorners(timg, cv::Size(11,4), corners, found);
+        drawChessboardCorners(timg, cv::Size(3,9), corners, found);
         show_img(timg);
         cornerSubPix(timg, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 80000, 1e-4));
     };
     std::filesystem::directory_iterator list(config.images_path);
     for (auto &it : list) {
-        match_points(it.path().string());
+        //match_points(it.path().string());
     }
 }
 
@@ -74,7 +74,7 @@ TEST(StereoCameraLib, TEST_CLIB){
 }
 
 TEST(StereoCameraLib, TEST_CLIB_LIB){
-    StereoCalibInerAndExter({"D:\\debug\\test.jpg","D:\\debug\\test.jpg"},{3,9},30.);
+    StereoCalibInerAndExter({"D:\\debug\\test.jpg","D:\\debug\\test.jpg"},{3,9},50.);
 }
 
 int main(int argc,char **argv){

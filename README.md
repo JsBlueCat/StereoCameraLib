@@ -30,4 +30,5 @@ ctest all --vebose
 ## 常见问题 
 
 0x000035 需要配置cmake路径，不然 vs的cmake nijia build 冲突。
+0x000135 需要opencv 的版本和实际gtest的版本一致。
 需要安装 .net framework 最新
