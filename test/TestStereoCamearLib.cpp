@@ -59,7 +59,7 @@ TEST(StereoCameraLib, TEST_FOUND){
         ASSERT_EQ(found,true);
         drawChessboardCorners(timg, cv::Size(3,9), corners, found);
         show_img(timg);
-        cornerSubPix(timg, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 80000, 1e-4));
+        cornerSubPix(timg, corners, cv::Size(11, 11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 80000, 1e-8));
     };
     std::filesystem::directory_iterator list(config.images_path);
     for (auto &it : list) {
