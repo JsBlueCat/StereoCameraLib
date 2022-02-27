@@ -83,13 +83,13 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 	std::cout << "Running stereo calibration ...\n";
 	std::vector<cv::Mat> cameraMatrix = { cv::Mat::eye(3, 3, CV_64F),cv::Mat::eye(3, 3, CV_64F) };
 	std::vector<cv::Mat> distCoeffs = { cv::Mat::zeros(5, 1, CV_64F),cv::Mat::zeros(5, 1, CV_64F) };
-	cameraMatrix[0].at<double>(0, 0) = 12*2.4*1000/12.7;
+	cameraMatrix[0].at<double>(0, 0) = 5472*16/12.8;
 	cameraMatrix[0].at<double>(0, 2) = 2736;
-	cameraMatrix[0].at<double>(1, 1) = 9*2.4*1000/9.6;
+	cameraMatrix[0].at<double>(1, 1) = 3648*16/9.6;
 	cameraMatrix[0].at<double>(1, 2) = 1824;
 	cameraMatrix[1] = cameraMatrix[0];
 	{ // method 1 find the point with clibrate two camera
-		double aspectRatio = (double)12.7/9.6;
+		// double aspectRatio = (double)9.6/12.8;
 		// cv::Mat cameraMatrix[2], distCoeffs[2], r, t;
 		for (int i = 0; i < 2; i++) {
 			cv::Mat r, t;
@@ -109,7 +109,7 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 	cv::Mat R, T, E, F ,perViewErrors;
 	R = cv::Mat::eye(3, 3, CV_64F);
 	T = cv::Mat::zeros(3, 1, CV_64F);
-	T.at<double>(0, 0) = -350;
+	T.at<double>(0, 0) = -300;
 	double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
 								 cameraMatrix[0], distCoeffs[0],
 								 cameraMatrix[1], distCoeffs[1],
