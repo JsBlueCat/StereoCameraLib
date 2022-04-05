@@ -63,19 +63,17 @@ TEST(StereoCameraLib, TEST_FOUND){
     };
     std::filesystem::directory_iterator list(config.images_path);
     for (auto &it : list) {
-        //match_points(it.path().string());
+        // match_points(it.path().string());
     }
 }
 
 TEST(StereoCameraLib, TEST_CLIB){
     auto cam = StereoCamera::GetInstance();
     Check_Api(cam->ClibCam());
-    ASSERT_EQ(1,2);
 }
 
-TEST(StereoCameraLib, TEST_CLIB_LIB){
-    StereoCalibInerAndExter({"D:\\debug\\test.jpg","D:\\debug\\test.jpg"},{3,9},50.);
-}
+
+
 
 int main(int argc,char **argv){
   testing::InitGoogleTest(&argc,argv);

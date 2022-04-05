@@ -46,7 +46,7 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 				drawChessboardCorners(timg, boardSize, corners, found);
 				std::cout << "before subpix" <<cv::Mat(corners);
 				show_img(timg);
-				cornerSubPix(timg, corners, Size(11,11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 80000, 1e-8));
+				cornerSubPix(timg, corners, Size(11,11), cv::Size(-1, -1), cv::TermCriteria(CV_TERMCRIT_ITER + CV_TERMCRIT_EPS, 10000, 1e-5));
 				std::cout << "after subpix" <<cv::Mat(corners);
 				return true;
 			};
@@ -76,17 +76,21 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 	{
 		for (j = 0; j < boardSize.height; j++)
 			for (k = 0; k < boardSize.width; k++)
-				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize) + squareSize / 2, float(j * squareSize) + squareSize / 2, 0));
+				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize), float(j * squareSize), 2000));
 				// objectPoints[i].push_back(cv::Point3f(float(j * squareSize), float(k * squareSize), 0));
 	}
 
 	std::cout << "Running stereo calibration ...\n";
+//  method 1 
+/*
 	std::vector<cv::Mat> cameraMatrix = { cv::Mat::eye(3, 3, CV_64F),cv::Mat::eye(3, 3, CV_64F) };
 	std::vector<cv::Mat> distCoeffs = { cv::Mat::zeros(5, 1, CV_64F),cv::Mat::zeros(5, 1, CV_64F) };
-	cameraMatrix[0].at<double>(0, 0) = 5472*16/12.8;
-	cameraMatrix[0].at<double>(0, 2) = 2736;
-	cameraMatrix[0].at<double>(1, 1) = 3648*16/9.6;
-	cameraMatrix[0].at<double>(1, 2) = 1824;
+	cameraMatrix[0].at<double>(0,0) = (5472*16/12.8)/(3648*16/9.6);
+	// cameraMatrix[0].at<double>(0, 0) = 5472*16/12.8;
+	// cameraMatrix[0].at<double>(0, 2) = 2736;
+	// cameraMatrix[0].at<double>(1, 1) = 3648*16/9.6;
+	// cameraMatrix[0].at<double>(1, 2) = 1824;
+
 	cameraMatrix[1] = cameraMatrix[0];
 	{ // method 1 find the point with clibrate two camera
 		// double aspectRatio = (double)9.6/12.8;
@@ -95,31 +99,38 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 			cv::Mat r, t;
 			double err = calibrateCamera(objectPoints, imagePoints[i], imageSize, cameraMatrix[i],
 				distCoeffs[i], r, t,
-				cv::CALIB_USE_INTRINSIC_GUESS +
 				CALIB_FIX_ASPECT_RATIO +
 				CALIB_FIX_PRINCIPAL_POINT + 
-				CALIB_ZERO_TANGENT_DIST
-				/*CALIB_FIX_K3|CALIB_FIX_K4|CALIB_FIX_K5|CALIB_FIX_K6*/);
+				CALIB_ZERO_TANGENT_DIST +
+				CALIB_FIX_K4 +            
+				CALIB_FIX_K5
+				);
 		}
 
 	}
 	std::cout << cameraMatrix[0];
 	std::cout << cameraMatrix[1];
+*/
 
 	cv::Mat R, T, E, F ,perViewErrors;
-	R = cv::Mat::eye(3, 3, CV_64F);
-	T = cv::Mat::zeros(3, 1, CV_64F);
-	T.at<double>(0, 0) = -300;
+	Mat cameraMatrix[2], distCoeffs[2];
+    cameraMatrix[0] = initCameraMatrix2D(objectPoints,imagePoints[0],imageSize,0);
+    cameraMatrix[1] = initCameraMatrix2D(objectPoints,imagePoints[1],imageSize,0);
+	// R = cv::Mat::eye(3, 3, CV_64F);
+	// T = cv::Mat::zeros(3, 1, CV_64F);
+	// T.at<double>(0, 0) = -300;
 	double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
 								 cameraMatrix[0], distCoeffs[0],
 								 cameraMatrix[1], distCoeffs[1],
 								 imageSize, R, T, E, F, perViewErrors,
-								CALIB_FIX_INTRINSIC +
-								CALIB_USE_EXTRINSIC_GUESS +
-								CALIB_FIX_ASPECT_RATIO +
-								CALIB_FIX_PRINCIPAL_POINT +
-								CALIB_ZERO_TANGENT_DIST,
-								cv::TermCriteria(cv::TermCriteria::COUNT + cv::TermCriteria::EPS, 10000, 1e-5));
+								 CALIB_FIX_ASPECT_RATIO +
+								 CALIB_ZERO_TANGENT_DIST +
+								 CALIB_USE_INTRINSIC_GUESS +
+								 CALIB_SAME_FOCAL_LENGTH +
+								 CALIB_RATIONAL_MODEL +
+								 CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
+								 TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 100, 1e-5)
+								 );
 	std::cout << "done with RMS error=" << rms << std::endl;
 	std::cout << cameraMatrix[0];
 	std::cout << cameraMatrix[1];
@@ -352,7 +363,7 @@ ErrorInfo MatchCp3(std::vector<cv::Point2f> &target_l_points, std::vector<cv::Po
 		double distance_l = _ABS(target_r_points[i].x - target_l_points[i].x);//_ABS(target_r_points[i].x - target_l_points[i].x);
 		cv::Mat temp(4, 1, CV_64FC1);
 		//cout << target_r_points[i].x << ","<< target_r_points[i].y << endl;
-		temp.at<double>(0, 0) = target_l_points[i].x ;
+		temp.at<double>(0, 0) = target_l_points[i].x;
 		temp.at<double>(1, 0) = target_l_points[i].y;
 		temp.at<double>(2, 0) = distance_l;
 		temp.at<double>(3, 0) = 1.;
@@ -454,6 +465,10 @@ ErrorInfo MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points
 	out = results;
 	return ErrorInfo::Success;
 }
+
+// std::pair<std::vector<cv::Rect>,ErrorInfo> CoraselyFindCp3(cv::Mat& middle){
+
+// }
 
 // void FixROI(std::vector<std::vector<cv::Point2f>> &corners, cv::Point2f &roi) {
 // 	// 消除整张图的偏移

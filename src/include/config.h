@@ -8,7 +8,7 @@
 
 class Config {
 public:
-  std::filesystem::path root_path, config_path, images_path, debug_images;
+  std::filesystem::path root_path, config_path, images_path, debug_images, result_path , split_images;
   cv::Size boardSize;
   float squareSize;
   static Config &
@@ -25,7 +25,7 @@ private:
          float squareSize)
       : root_path(root), config_path(root / "config"),
         images_path(root / "images"), debug_images(root / "debug_images"),
-        boardSize(boardSize), squareSize(squareSize) {
+        result_path(root / "results"), split_images(root / "split_images" ), boardSize(boardSize), squareSize(squareSize) {
     init_directory();
   }
   Config(const Config &) = delete;
@@ -42,6 +42,8 @@ private:
     create_and_permiss(config_path);
     create_and_permiss(images_path);
     create_and_permiss(debug_images);
+    create_and_permiss(result_path);
+    create_and_permiss(split_images);
   }
 public:
   void save_img(std::string path, std::string name, cv::Mat &img) const {

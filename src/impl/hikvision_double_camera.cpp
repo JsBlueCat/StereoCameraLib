@@ -8,6 +8,7 @@
 #include <string>
 #include <vector>
 #include <ctime>
+#include <fstream>
 
 std::shared_ptr<StereoCamera> StereoCamera::instance{nullptr};
 ErrorInfo StereoCamera::cam_st{ErrorInfo::Success};
@@ -304,8 +305,20 @@ ErrorInfo StereoCamera::MatchSingleFrame(int i, std::vector<cv::Mat> &results) {
     std::cout << "Match MutiCp3 Error" << std::endl;
     return ErrorInfo::Cp3NotFound;
   }
+  time_t curr_time;
+	curr_time = time(NULL);
+  struct tm tm_local;
+	localtime_s(&tm_local,&curr_time);
+  std::string day = std::to_string(tm_local.tm_year + 1900) + "-"
+    + std::to_string(tm_local.tm_mon+1) + "-" + std::to_string(tm_local.tm_mday);
+  std::string time = std::to_string(tm_local.tm_hour) + "_"
+    + std::to_string(tm_local.tm_min) + "_" + std::to_string(tm_local.tm_sec);
+
+  std::ofstream result_file;
+  result_file.open(config.result_path/(day+".txt"), std::ios::app);
   for (auto &result : results) {
     std::cout << result << std::endl;
+    result_file << time << " | " << result << std::endl;
   }
   return ErrorInfo::Success;
 }
