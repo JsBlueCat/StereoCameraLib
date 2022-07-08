@@ -46,8 +46,9 @@ TEST(ImageProcess,TEST_Multicp3){
     auto const &config = Config::get_single();
     cv::Mat M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q, affine_R, affine_T;
     LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
+    LoadTransformParam(affine_R,affine_T);
     std::vector<cv::Mat> results;
-    std::filesystem::directory_iterator list(config.debug_images/"ALL_IMAGES");
+    std::filesystem::directory_iterator list(config.debug_images/"2500-03");
     std::vector<std::string> cp3_pictures; 
     for (auto &it : list) {
         // std::cout << it.path().string() << std::endl;
@@ -148,9 +149,12 @@ TEST(ImageProcess,TEST_Multicp3){
         result_file.open(config.result_path/(day+".txt"), std::ios::app);
         result_file_xyz.open(config.result_path/(day+"_+xyz.txt"), std::ios::app);
         for (auto &result : results) {
-            std::cout << result << std::endl;
+            cv::Mat new_mat;
+            std::cout << affine_R << affine_T << std::endl;
+            TransfromPoint(result(cv::Rect(0,0,1,3)),affine_R,affine_T,new_mat);
+            std::cout << new_mat << std::endl;
             result_file << time << " | " << result << std::endl;
-            result_file_xyz << result.at<double>(0,0) << " " << result.at<double>(1,0) << " " <<  result.at<double>(2,0) << std::endl;
+            result_file_xyz << new_mat.at<double>(0,0) << " " << new_mat.at<double>(1,0) << " " <<  new_mat.at<double>(2,0) << std::endl;
         }
         return ErrorInfo::Success;
     };

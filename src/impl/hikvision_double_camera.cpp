@@ -318,9 +318,9 @@ ErrorInfo StereoCamera::MatchSingleFrame(int i, std::vector<cv::Mat> &results) {
   std::ofstream result_file;
   result_file.open(config.result_path/(day+".txt"), std::ios::app);
   for (auto &result : results) {
-    TransfromPoint(result,affine_R,affine_T); // 转换参数空间
-    std::cout << result << std::endl;
-    result_file << "采集时间" <<time << "\n" << "cp3: x: " << result.at<double>(0,0) << " ,y: " << result.at<double>(0,1) << " ,z:" << result.at<double>(0,2) << std::endl;
+    cv::Mat new_mat;
+    TransfromPoint(result(cv::Rect(0,0,1,3)),affine_R,affine_T,new_mat); // 转换参数空间
+    result_file << "采集时间" <<time << "\n" << "cp3: x: " << new_mat.at<double>(0,0) << " ,y: " << new_mat.at<double>(1,0) << " ,z:" << new_mat.at<double>(2,0) << std::endl;
   }
   return ErrorInfo::Success;
 }

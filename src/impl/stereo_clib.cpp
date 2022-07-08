@@ -465,8 +465,8 @@ ErrorInfo MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points
 	return ErrorInfo::Success;
 }
 
-ErrorInfo TransfromPoint(cv::Mat& points, cv::Mat& affine_R, cv::Mat &affine_T){
-	points = (affine_R * points.t() + affine_T).t();
+ErrorInfo TransfromPoint(cv::Mat& points, cv::Mat& affine_R, cv::Mat &affine_T ,cv::Mat & out){
+	out = affine_R * points + affine_T;
 	return ErrorInfo::Success;
 }
 
