@@ -47,7 +47,7 @@ TEST(ImageProcess,TEST_Multicp3){
     cv::Mat M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q, affine_R, affine_T;
     LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
     std::vector<cv::Mat> results;
-    std::filesystem::directory_iterator list(config.debug_images/"2022-3-22");
+    std::filesystem::directory_iterator list(config.debug_images/"ALL_IMAGES");
     std::vector<std::string> cp3_pictures; 
     for (auto &it : list) {
         // std::cout << it.path().string() << std::endl;
@@ -144,10 +144,13 @@ TEST(ImageProcess,TEST_Multicp3){
         }
 
         std::ofstream result_file;
+        std::ofstream result_file_xyz;
         result_file.open(config.result_path/(day+".txt"), std::ios::app);
+        result_file_xyz.open(config.result_path/(day+"_+xyz.txt"), std::ios::app);
         for (auto &result : results) {
             std::cout << result << std::endl;
             result_file << time << " | " << result << std::endl;
+            result_file_xyz << result.at<double>(0,0) << " " << result.at<double>(1,0) << " " <<  result.at<double>(2,0) << std::endl;
         }
         return ErrorInfo::Success;
     };

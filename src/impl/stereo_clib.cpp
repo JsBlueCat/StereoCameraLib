@@ -76,7 +76,7 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 	{
 		for (j = 0; j < boardSize.height; j++)
 			for (k = 0; k < boardSize.width; k++)
-				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize), float(j * squareSize), 2000));
+				objectPoints[i].push_back(cv::Point3f(float(( 2 * k + j % 2) * squareSize), float(j * squareSize), 0));
 				// objectPoints[i].push_back(cv::Point3f(float(j * squareSize), float(k * squareSize), 0));
 	}
 
@@ -114,11 +114,8 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 
 	cv::Mat R, T, E, F ,perViewErrors;
 	Mat cameraMatrix[2], distCoeffs[2];
-    cameraMatrix[0] = initCameraMatrix2D(objectPoints,imagePoints[0],imageSize,0);
-    cameraMatrix[1] = initCameraMatrix2D(objectPoints,imagePoints[1],imageSize,0);
-	// R = cv::Mat::eye(3, 3, CV_64F);
-	// T = cv::Mat::zeros(3, 1, CV_64F);
-	// T.at<double>(0, 0) = -300;
+    cameraMatrix[0] = initCameraMatrix2D(objectPoints,imagePoints[0],imageSize, 0.5);
+    cameraMatrix[1] = initCameraMatrix2D(objectPoints,imagePoints[1],imageSize, 0.5);
 	double rms = stereoCalibrate(objectPoints, imagePoints[0], imagePoints[1],
 								 cameraMatrix[0], distCoeffs[0],
 								 cameraMatrix[1], distCoeffs[1],
@@ -127,9 +124,9 @@ ErrorInfo StereoCalibInerAndExter(const std::vector<std::string> &imagelist, cv:
 								 CALIB_ZERO_TANGENT_DIST +
 								 CALIB_USE_INTRINSIC_GUESS +
 								 CALIB_SAME_FOCAL_LENGTH +
-								 CALIB_RATIONAL_MODEL +
+								 CALIB_RATIONAL_MODEL + 
 								 CALIB_FIX_K3 + CALIB_FIX_K4 + CALIB_FIX_K5,
-								 TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 100, 1e-5)
+								 TermCriteria(TermCriteria::COUNT+TermCriteria::EPS, 10000, 1e-6)
 								 );
 	std::cout << "done with RMS error=" << rms << std::endl;
 	std::cout << cameraMatrix[0];
@@ -316,14 +313,16 @@ ErrorInfo LoadInerAndExterParam(cv::Mat &M1,cv::Mat &D1,cv::Mat &M2,cv::Mat &D2,
 
 ErrorInfo LoadTransformParam(cv::Mat &affine_R,cv::Mat &affine_T){
 	auto const &config = Config::get_single();
-	cv::FileStorage fs((config.config_path / "coodinate.yml").string(), cv::FileStorage::READ);
+	cv::FileStorage fs((config.config_path / "transform.yml").string(), cv::FileStorage::READ);
 	if (!fs.isOpened())
 	{
-		printf("Failed to open file %s\n", "coodinate.yml");
+		printf("Failed to open file %s\n", "transform.yml");
 		return ErrorInfo::ConfigNotFound;
 	}
-	fs["R"] >> affine_R;
-	fs["T"] >> affine_T;
+	cv::Mat transform;
+	fs["transform"]>>transform;
+	affine_R = transform.colRange(cv::Range(0,3));
+	affine_T = transform.colRange(cv::Range(3,4));
 	return ErrorInfo::Success;
 }
 
@@ -463,6 +462,11 @@ ErrorInfo MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &left_target_points
 		results.push_back(tmp);
 	}
 	out = results;
+	return ErrorInfo::Success;
+}
+
+ErrorInfo TransfromPoint(cv::Mat& points, cv::Mat& affine_R, cv::Mat &affine_T){
+	points = (affine_R * points.t() + affine_T).t();
 	return ErrorInfo::Success;
 }
 

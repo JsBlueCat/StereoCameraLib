@@ -67,10 +67,10 @@ TEST(StereoCameraLib, TEST_FOUND){
     }
 }
 
-TEST(StereoCameraLib, TEST_CLIB){
-    auto cam = StereoCamera::GetInstance();
-    Check_Api(cam->ClibCam());
-}
+// TEST(StereoCameraLib, TEST_CLIB){
+//     auto cam = StereoCamera::GetInstance();
+//     Check_Api(cam->ClibCam());
+// }
 
 
 

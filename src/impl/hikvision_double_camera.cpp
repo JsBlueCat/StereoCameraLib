@@ -253,6 +253,7 @@ ErrorInfo StereoCamera::ClibCam() {
 }
 
 ErrorInfo StereoCamera::LoadParam() {
+  LoadTransformParam(affine_R,affine_T);
   return LoadInerAndExterParam(M1, D1, M2, D2, R, T, R1, P1, R2, P2, Q);
   // LoadTransformParam(affine_R, affine_T);
 }
@@ -317,8 +318,9 @@ ErrorInfo StereoCamera::MatchSingleFrame(int i, std::vector<cv::Mat> &results) {
   std::ofstream result_file;
   result_file.open(config.result_path/(day+".txt"), std::ios::app);
   for (auto &result : results) {
+    TransfromPoint(result,affine_R,affine_T); // 转换参数空间
     std::cout << result << std::endl;
-    result_file << time << " | " << result << std::endl;
+    result_file << "采集时间" <<time << "\n" << "cp3: x: " << result.at<double>(0,0) << " ,y: " << result.at<double>(0,1) << " ,z:" << result.at<double>(0,2) << std::endl;
   }
   return ErrorInfo::Success;
 }

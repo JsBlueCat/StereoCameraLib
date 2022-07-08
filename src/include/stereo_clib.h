@@ -39,5 +39,5 @@ std::pair<std::vector<cv::Rect>,ErrorInfo> CoraselyFindCp3(cv::Mat& middle);
 ErrorInfo MutiFindCp3(cv::Mat &middle_img,std::vector<cv::Rect> &area,std::vector<std::vector<cv::Point2f>> &target_point_list);
 void MutiFixROIList(std::vector<std::vector<cv::Point2f>>& corner_list, std::vector<cv::Rect>& rect_list, cv::Point2f roi);
 ErrorInfo MutiMatchCp3(std::vector<std::vector<cv::Point2f>> &,std::vector<std::vector<cv::Point2f>> &,cv::Mat &, std::vector<cv::Mat> &);
-
+ErrorInfo TransfromPoint(cv::Mat& points, cv::Mat& affine_R, cv::Mat &affine_T);
 // static ErrorInfo FixROI(std::vector<cv::Point2f>& corners, cv::Point2f &roi);
